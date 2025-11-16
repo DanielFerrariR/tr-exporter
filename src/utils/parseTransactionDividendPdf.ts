@@ -7,7 +7,7 @@ export interface TransactionPdfData {
   currency: string;
   taxAmount: string;
   taxCurrency: string;
-  total: string;
+  dividendTotal: string;
 }
 
 export const parseTransactionDividendPdf = async (
@@ -34,7 +34,7 @@ export const parseTransactionDividendPdf = async (
     let currency: string = '';
     let taxAmount: string = '';
     let taxCurrency: string = '';
-    let total: string = '';
+    let dividendTotal: string = '';
 
     if (positionMatch) {
       shares = new BigNumber(positionMatch[2].replace(',', '.')).toFixed();
@@ -42,7 +42,9 @@ export const parseTransactionDividendPdf = async (
         positionMatch[3].replace(',', '.'),
       ).toFixed();
       currency = positionMatch[4];
-      total = new BigNumber(positionMatch[5].replace(',', '.')).toFixed();
+      dividendTotal = new BigNumber(
+        positionMatch[5].replace(',', '.'),
+      ).toFixed();
     } else {
       console.error('Could not extract position data from PDF');
     }
@@ -58,7 +60,7 @@ export const parseTransactionDividendPdf = async (
       currency,
       taxAmount,
       taxCurrency,
-      total,
+      dividendTotal,
     };
   } catch (error) {
     console.error('Error parsing PDF:', error);
@@ -68,7 +70,7 @@ export const parseTransactionDividendPdf = async (
       currency: '',
       taxAmount: '',
       taxCurrency: '',
-      total: '',
+      dividendTotal: '',
     };
   }
 };

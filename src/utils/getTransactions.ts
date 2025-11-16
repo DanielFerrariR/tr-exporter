@@ -6,12 +6,11 @@ import {
   Activity,
   ActivityResponse,
   TransactionTableSection,
-  CashResponse,
+  PortfolioData,
 } from '../types';
 import { TradeRepublicAPI } from '../api';
 import {
   ACTIVITY_EVENT_TYPE,
-  CURRENCY_TO_SIGN_MAP,
   RECEIVED_COMMAND_TYPES,
   SUBSCRIPTION_TYPES,
   TRANSACTION_EVENT_TYPE,
@@ -20,13 +19,17 @@ import {
   identifyActivityEventType,
   identifyTransactionEventType,
 } from './identifyEventType';
+import { mapTransactionsToPortfolioData } from './mapTransactionsToPortfolioData';
 
 const OUTPUT_DIRECTORY = 'build';
 const TRANSACTIONS_FILE_NAME = 'transactions.json';
 const ACTIVITIES_FILE_NAME = 'activities.json';
-const TRANSACTIONS_WITH_DETAILS_FILE_NAME = 'transactions_with_details.json';
 
-export const getTransactions = async (): Promise<Transaction[]> =>
+export const getTransactions = async (): Promise<{
+  transactions: Transaction[];
+  activities: Activity[];
+  portfolioData: PortfolioData;
+}> =>
   new Promise((resolve, reject) => {
     let activities: Activity[] = [];
     let transactions: Transaction[] = [];
@@ -51,7 +54,7 @@ export const getTransactions = async (): Promise<Transaction[]> =>
           reject(error);
         }
       },
-      onMessage: (message, { command, jsonPayload, subscription }) => {
+      onMessage: async (message, { command, jsonPayload, subscription }) => {
         // We don't want to see logs of keep-alive messages
         if (command === RECEIVED_COMMAND_TYPES.KEEP_ALIVE) return;
 
@@ -112,7 +115,7 @@ export const getTransactions = async (): Promise<Transaction[]> =>
                 eventType:
                   identifyTransactionEventType(transaction) ?? undefined,
               }))
-              .filter((transaction) => transaction.eventType !== undefined);
+              .filter((transaction) => !!transaction.eventType);
 
             // Adding fake received gift transactions from activities as transactions list doesn't include received gifts
             const giftTransactions: Transaction[] = activities
@@ -164,12 +167,6 @@ export const getTransactions = async (): Promise<Transaction[]> =>
             //
 
             console.log('All transactions fetched.');
-            saveFile(
-              JSON.stringify(transactions, null, 2),
-              TRANSACTIONS_FILE_NAME,
-              OUTPUT_DIRECTORY,
-            );
-
             console.log('Starting to fetch details for each transaction.');
             for (const transaction of transactions) {
               transactionsToFetchDetailsFor.add(transaction.id);
@@ -234,13 +231,16 @@ export const getTransactions = async (): Promise<Transaction[]> =>
             console.log('All transaction details fetched.');
             saveFile(
               JSON.stringify(transactions, null, 2),
-              TRANSACTIONS_WITH_DETAILS_FILE_NAME,
+              TRANSACTIONS_FILE_NAME,
               OUTPUT_DIRECTORY,
             );
-            console.log('Starting to fetch the current cash balance.');
-            TradeRepublicAPI.getInstance().sendSubscriptionMessage(
-              SUBSCRIPTION_TYPES.CASH,
-            );
+
+            console.log('Generating portfolio data...');
+            const portfolioData: PortfolioData =
+              await mapTransactionsToPortfolioData(transactions);
+
+            TradeRepublicAPI.getInstance().disconnect();
+            resolve({ transactions, activities, portfolioData });
           } catch (error) {
             console.error(
               'Error processing transaction details message:',
@@ -248,19 +248,6 @@ export const getTransactions = async (): Promise<Transaction[]> =>
             );
             reject(error);
           }
-        }
-
-        if (subscription?.type === SUBSCRIPTION_TYPES.CASH) {
-          const cashResponse = jsonPayload as CashResponse;
-          const currency = CURRENCY_TO_SIGN_MAP[cashResponse.currencyId];
-          let amount = cashResponse.amount;
-
-          console.log(`Your current cash balance is: ${amount} ${currency}`);
-          console.log(
-            `Please follow the steps in the README to manually add your cash balance in the Snowball Analytics app.`,
-          );
-          TradeRepublicAPI.getInstance().disconnect();
-          resolve(transactions);
         }
       },
       onClose: (event) => {

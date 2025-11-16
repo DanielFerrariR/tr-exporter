@@ -1,11 +1,7 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
-import {
-  convertTransactionsToSnowballCsv,
-  getTransactions,
-  interactiveSocketConnection,
-  login,
-} from './utils';
+import { getTransactions, interactiveSocketConnection, login } from './utils';
+import { convertTransactionsToSnowballCsv } from './supportedTrackers/snowballAnalytics/convertTransactionsToSnowballCsv';
 
 const MENU_OPTIONS = {
   DOWNLOAD_JSON_AND_CONVERT_TRANSACTIONS_TO_SNOWBALL_CSV:
@@ -39,8 +35,8 @@ const MENU_OPTIONS = {
   ) {
     const wasLoginSuccessful = await login();
     if (!wasLoginSuccessful) return;
-    const transactions = await getTransactions();
-    await convertTransactionsToSnowballCsv(transactions);
+    const { portfolioData } = await getTransactions();
+    await convertTransactionsToSnowballCsv(portfolioData);
     console.log('Conversion to Snowball CSV completed.');
   }
 

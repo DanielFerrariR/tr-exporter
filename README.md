@@ -1,6 +1,6 @@
-# tr2sa: Convert Trade Republic Transactions History to Snowball Analytics CSV
+# TR Export: Export Trade Republic Transactions History and convert to common portfolio trackers
 
-This library only purpose is to generate a CSV file for Snowball Analytics. It is not affiliated with Trade Republic Bank GmbH.
+This library only purpose is to download the transaction history from a Trade Republic and conver to common portfolio trackers. It is not affiliated with Trade Republic Bank GmbH.
 
 Currently supported transactions:
 
@@ -13,19 +13,11 @@ Currently supported transactions:
 - tax corrections
 - received stock gift (when opening an account and from a friend)
 
-## Update cash balance
-
-You need to manually update your current cash balance in Snowball Analytics.
-
-1 - Go to the current portfolio settings and make sure 'Cash accounting' is in 'Current balance'
-
-2 - Import the CSV
-
-4 - Go to https://snowball-analytics.com/cash and update your cash balance.
-
 ## What is currently supported
 
-- Download JSON and convert it to Snowball CSV
+- Download transactions JSON
+- Convert JSON to supported portfolio trackers. Currently supported trackers:
+  - Snowball Analytics
 - Connect to WebSocket (interact via prompt)
   - Known supported commands:
     - Transactions: {"type": "timelineTransactions", after: '...' } // list of transactions with optional 'after' option to get the next list of transactions (after needs the hash from the previous call)

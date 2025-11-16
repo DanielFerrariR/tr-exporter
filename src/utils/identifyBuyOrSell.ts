@@ -1,6 +1,6 @@
-import { Transaction } from '../types';
+import { PortfolioEvent, Transaction } from '../types';
 
-export const identifyBuyOrSell = (transaction: Transaction): string => {
+export const identifyBuyOrSell = (transaction: Transaction): PortfolioEvent => {
   if (
     transaction.subtitle === 'Buy Order' ||
     transaction.subtitle === 'Limit Buy' ||
@@ -8,7 +8,7 @@ export const identifyBuyOrSell = (transaction: Transaction): string => {
     transaction.subtitle === 'Round up' || // Trade Republic considers this a buy transaction
     transaction.subtitle === 'Saveback' // Trade Republic considers this a buy transaction
   ) {
-    return 'Buy';
+    return PortfolioEvent.Buy;
   }
-  return 'Sell';
+  return PortfolioEvent.Sell;
 };
