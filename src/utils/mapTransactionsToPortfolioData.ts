@@ -307,7 +307,7 @@ export const mapTransactionsToPortfolioData = async (
       let currency = transaction.amount.currency;
       let amount = parseToBigNumber(
         transaction.amount.value.toString(),
-      ).toFixed(2);
+      ).toFixed();
       let feeTax = '';
       let feeCurrency = '';
 
