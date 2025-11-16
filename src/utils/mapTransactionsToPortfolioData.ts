@@ -319,20 +319,10 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Tax',
           );
 
-          // Use displayValue for proper format, fallback to text
-          const taxValue =
-            taxSubSection?.detail?.displayValue?.text ??
-            taxSubSection?.detail?.text;
-
+          const taxValue = taxSubSection?.detail?.text;
           feeTax = taxValue?.slice(1) ?? '';
           if (feeTax === '0.00') feeTax = '';
-
-          // Only set feeCurrency if there's actually a tax
-          if (feeTax && feeTax !== '0.00') {
-            feeCurrency =
-              SIGN_TO_CURRENCY_MAP[taxValue?.[0]!] ??
-              transaction.amount.currency;
-          }
+          feeCurrency = feeTax ? SIGN_TO_CURRENCY_MAP[taxValue?.[0]!] : '';
         }
       });
 
