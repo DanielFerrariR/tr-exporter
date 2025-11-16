@@ -1,5 +1,5 @@
 import { TRANSACTION_EVENT_TYPE } from '../../constants';
-import { ORDER_TYPE, PortfolioData } from '../../types';
+import { TRANSACTION_TYPE, PortfolioData } from '../../types';
 import { getExchangeFromIsin } from '../../utils/getExchangeFromIsin';
 import { saveFile } from '../../utils/saveFile';
 
@@ -69,7 +69,7 @@ export const convertTransactionsToSnowballCsv = async (
       item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
       item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK
     ) {
-      event = item.orderType === ORDER_TYPE.BUY ? 'Buy' : 'Sell';
+      event = item.type;
       date = item.date;
       symbol = item.isin;
       exchange = await getExchangeFromIsin(symbol);
@@ -87,7 +87,7 @@ export const convertTransactionsToSnowballCsv = async (
       item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
     ) {
       event =
-        item.orderType === ORDER_TYPE.CASH_GAIN ? 'Cash_Gain' : 'Cash_Expense';
+        item.type === TRANSACTION_TYPE.CASH_GAIN ? 'Cash_Gain' : 'Cash_Expense';
       date = item.date;
       symbol = ''; // Cash transactions don't have ISIN
       exchange = ''; // Cash transactions don't have exchange

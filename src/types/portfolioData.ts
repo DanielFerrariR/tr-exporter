@@ -1,14 +1,14 @@
 import { TRANSACTION_EVENT_TYPE } from '../constants';
 
-export enum ORDER_TYPE {
+export enum TRANSACTION_TYPE {
   BUY = 'Buy',
   SELL = 'Sell',
   CASH_GAIN = 'Cash Gain',
-  CASH_LOSS = 'Cash Loss',
+  CASH_EXPENSE = 'Cash Expense',
 }
 
 // Buy and Sell
-interface TradeTransaction {
+interface OrderTransaction {
   title: string;
   eventType:
     | TRANSACTION_EVENT_TYPE.TRADE
@@ -17,7 +17,7 @@ interface TradeTransaction {
     | TRANSACTION_EVENT_TYPE.CASHBACK
     | TRANSACTION_EVENT_TYPE.STOCK_PERK
     | TRANSACTION_EVENT_TYPE.GIFT;
-  orderType: ORDER_TYPE.BUY | ORDER_TYPE.SELL;
+  type: TRANSACTION_TYPE.BUY | TRANSACTION_TYPE.SELL;
   date: string;
   isin: string;
   price: string;
@@ -49,7 +49,7 @@ interface CashTransaction {
   eventType:
     | TRANSACTION_EVENT_TYPE.INTEREST
     | TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
-  orderType: ORDER_TYPE.CASH_GAIN | ORDER_TYPE.CASH_LOSS;
+  type: TRANSACTION_TYPE.CASH_GAIN | TRANSACTION_TYPE.CASH_EXPENSE;
   date: string;
   amount: string;
   currency: string;
@@ -60,7 +60,7 @@ interface CashTransaction {
 // Not real Trade Republic types, just used for our internal purposes
 // Used to simplify the data needed to build a portfolio CSV
 export type PortfolioData = (
-  | TradeTransaction
+  | OrderTransaction
   | DividendTransaction
   | CashTransaction
 )[];

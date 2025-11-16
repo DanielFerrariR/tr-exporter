@@ -60,7 +60,7 @@ const MENU_OPTIONS = {
 
   if (action === MENU_OPTIONS.IMPORT_AND_CONVERT_TRANSACTIONS_TO_SNOWBALL_CSV) {
     try {
-      const jsonFilePath = 'build/transactions.json';
+      const jsonFilePath = 'build/portfolioData.json';
       if (!fs.existsSync(jsonFilePath)) {
         console.error(`Error: ${jsonFilePath} not found.`);
         console.error(
