@@ -67,7 +67,9 @@ export const convertTransactionsToSnowballCsv = async (
       item.eventType === TRANSACTION_EVENT_TYPE.TRADE ||
       item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
       item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
-      item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK
+      item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
+      item.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK ||
+      item.eventType === TRANSACTION_EVENT_TYPE.GIFT
     ) {
       event = item.type;
       date = item.date;

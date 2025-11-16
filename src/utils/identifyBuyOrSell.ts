@@ -1,3 +1,4 @@
+import { TRANSACTION_EVENT_TYPE } from '../constants';
 import { TRANSACTION_TYPE, Transaction } from '../types';
 
 export const identifyBuyOrSell = (
@@ -6,9 +7,11 @@ export const identifyBuyOrSell = (
   if (
     transaction.subtitle === 'Buy Order' ||
     transaction.subtitle === 'Limit Buy' ||
-    transaction.subtitle === 'Saving executed' ||
-    transaction.subtitle === 'Round up' || // Trade Republic considers this a buy transaction
-    transaction.subtitle === 'Saveback' // Trade Republic considers this a buy transaction
+    transaction.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
+    transaction.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
+    transaction.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
+    transaction.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK ||
+    transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT
   ) {
     return TRANSACTION_TYPE.BUY;
   }
