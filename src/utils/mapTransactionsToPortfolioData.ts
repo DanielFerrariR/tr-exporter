@@ -11,10 +11,6 @@ import {
 import { parseTransactionDividendPdf } from './parseTransactionDividendPdf';
 import { identifyBuyOrSell } from './identifyBuyOrSell';
 import { parseToBigNumber } from './parseToBigNumber';
-import { saveFile } from './saveFile';
-
-const OUTPUT_DIRECTORY = 'build';
-const FILE_NAME = 'portfolioData.json';
 
 export const mapTransactionsToPortfolioData = async (
   transactions: Transaction[],
@@ -309,40 +305,33 @@ export const mapTransactionsToPortfolioData = async (
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
       let currency = transaction.amount.currency;
-      let amount = '';
+      let amount = parseToBigNumber(
+        transaction.amount.value.toString(),
+      ).toFixed(2);
       let feeTax = '';
       let feeCurrency = '';
 
+      // New interest format includes tax, but the old one does not
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.title === 'Transaction') {
           const tableSection = section as TransactionTableSection;
-          const accruedSubSection = tableSection.data.find(
-            (subSection) => subSection.title === 'Accrued',
-          );
           const taxSubSection = tableSection.data.find(
             (subSection) => subSection.title === 'Tax',
           );
 
           // Use displayValue for proper format, fallback to text
-          const accruedValue =
-            accruedSubSection?.detail?.displayValue?.text ??
-            accruedSubSection?.detail?.text;
           const taxValue =
             taxSubSection?.detail?.displayValue?.text ??
             taxSubSection?.detail?.text;
 
-          amount = parseToBigNumber(
-            accruedValue?.replace(/[^0-9.]/g, '') ?? '0',
-          ).toFixed();
-          feeTax = taxValue?.slice(1) ?? '0';
+          feeTax = taxValue?.slice(1) ?? '';
+          if (feeTax === '0.00') feeTax = '';
 
           // Only set feeCurrency if there's actually a tax
           if (feeTax && feeTax !== '0.00') {
             feeCurrency =
               SIGN_TO_CURRENCY_MAP[taxValue?.[0]!] ??
               transaction.amount.currency;
-          } else {
-            feeCurrency = '';
           }
         }
       });
@@ -395,7 +384,5 @@ export const mapTransactionsToPortfolioData = async (
     }
   }
 
-  const jsonString = JSON.stringify(portfolioData, null, 2);
-  saveFile(jsonString, FILE_NAME, OUTPUT_DIRECTORY);
   return portfolioData;
 };

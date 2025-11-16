@@ -22,6 +22,7 @@ import { identifyActivityEventType } from './identifyActivityType';
 const OUTPUT_DIRECTORY = 'build';
 const TRANSACTIONS_FILE_NAME = 'transactions.json';
 const ACTIVITIES_FILE_NAME = 'activities.json';
+const PORTFOLIO_DATA_FILE_NAME = 'portfolioData.json';
 
 export const getTransactions = async (): Promise<{
   transactions: Transaction[];
@@ -232,6 +233,12 @@ export const getTransactions = async (): Promise<{
             console.log('Generating portfolio data...');
             const portfolioData: PortfolioData =
               await mapTransactionsToPortfolioData(transactions);
+
+            saveFile(
+              JSON.stringify(portfolioData, null, 2),
+              PORTFOLIO_DATA_FILE_NAME,
+              OUTPUT_DIRECTORY,
+            );
 
             TradeRepublicAPI.getInstance().disconnect();
             resolve({ transactions, activities, portfolioData });
