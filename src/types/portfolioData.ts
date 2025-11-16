@@ -6,7 +6,7 @@ export enum PortfolioEventType {
   CashExpense = 'Cash Expense',
 }
 
-// Buy, Limit Buy, Sell, Limit Sell
+// Buy and Sell
 interface OrderTransaction {
   title: string;
   eventType: PortfolioEventType.Buy | PortfolioEventType.Sell;
@@ -35,7 +35,7 @@ interface DividendTransaction {
   dividendTotal: string;
 }
 
-// Cash Gain, Cash Expense
+// Cash Gain and Cash Expense
 interface CashTransaction {
   title: string;
   eventType: PortfolioEventType.CashGain | PortfolioEventType.CashExpense;
