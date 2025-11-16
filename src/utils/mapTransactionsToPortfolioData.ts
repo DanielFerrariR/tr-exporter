@@ -35,9 +35,8 @@ export const mapTransactionsToPortfolioData = async (
 
     // Dividends
     if (
-      [TRANSACTION_EVENT_TYPE.SSP_CORPORATE_ACTION_INVOICE_CASH].includes(
-        transaction.eventType,
-      )
+      transaction.eventType ===
+      TRANSACTION_EVENT_TYPE.SSP_CORPORATE_ACTION_INVOICE_CASH
     ) {
       let title = transaction.title;
       let eventType = PortfolioEventType.Dividend;
@@ -88,11 +87,7 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // Received Stock gifts when opening an account
-    if (
-      [TRANSACTION_EVENT_TYPE.STOCK_PERK_REFUNDED].includes(
-        transaction.eventType,
-      )
-    ) {
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK_REFUNDED) {
       let eventType = PortfolioEventType.Buy; // Trade Republic uses "Buy" for received stocks
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
@@ -146,9 +141,8 @@ export const mapTransactionsToPortfolioData = async (
 
     // Received stock gifts from a friend
     if (
-      [TRANSACTION_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY].includes(
-        transaction.eventType,
-      )
+      transaction.eventType ===
+      TRANSACTION_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY
     ) {
       let eventType = PortfolioEventType.Buy; // Trade Republic uses "Buy" for received stocks
       let date = transaction.timestamp.slice(0, 10);
@@ -203,12 +197,13 @@ export const mapTransactionsToPortfolioData = async (
 
     // Buy and Sell transactions (trades, savings plans, roundups and 15 euros per month bonus)
     if (
-      [
-        TRANSACTION_EVENT_TYPE.TRADING_TRADE_EXECUTED,
-        TRANSACTION_EVENT_TYPE.TRADING_SAVINGSPLAN_EXECUTED,
-        TRANSACTION_EVENT_TYPE.BENEFITS_SPARE_CHANGE_EXECUTION,
-        TRANSACTION_EVENT_TYPE.BENEFITS_SAVEBACK_EXECUTION,
-      ].includes(transaction.eventType)
+      transaction.eventType === TRANSACTION_EVENT_TYPE.TRADING_TRADE_EXECUTED ||
+      transaction.eventType ===
+        TRANSACTION_EVENT_TYPE.TRADING_SAVINGSPLAN_EXECUTED ||
+      transaction.eventType ===
+        TRANSACTION_EVENT_TYPE.BENEFITS_SPARE_CHANGE_EXECUTION ||
+      transaction.eventType ===
+        TRANSACTION_EVENT_TYPE.BENEFITS_SAVEBACK_EXECUTION
     ) {
       let eventType = identifyBuyOrSell(transaction);
       let date = transaction.timestamp.slice(0, 10);
@@ -370,9 +365,8 @@ export const mapTransactionsToPortfolioData = async (
 
     // tax corrections
     if (
-      [TRANSACTION_EVENT_TYPE.SSP_TAX_CORRECTION_INVOICE].includes(
-        transaction.eventType,
-      )
+      transaction.eventType ===
+      TRANSACTION_EVENT_TYPE.SSP_TAX_CORRECTION_INVOICE
     ) {
       let eventType =
         transaction.amount.value > 0

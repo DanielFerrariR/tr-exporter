@@ -1,6 +1,7 @@
-# TR Export: Export Trade Republic Transactions History and convert to common portfolio trackers
+# TR Exporter: Export Trade Republic Transactions History
 
-This library only purpose is to download the transaction history from a Trade Republic and conver to common portfolio trackers. It is not affiliated with Trade Republic Bank GmbH.
+Export all your transactions from Trade Republic to be used in your portfolio tracker of your preference.
+Additionally, it provides a portfolio data file with all needed information from the transactions, so your can easily create a customizable csv from it. This project is not affiliated with Trade Republic Bank GmbH.
 
 Currently supported transactions:
 
@@ -13,11 +14,10 @@ Currently supported transactions:
 - tax corrections
 - received stock gift (when opening an account and from a friend)
 
-## What is currently supported
+## Features
 
-- Download transactions JSON
-- Convert JSON to supported portfolio trackers. Currently supported trackers:
-  - Snowball Analytics
+- Download transactions
+- Download transactions and convert them to Snowball Analytics CSV (currently the only supported tracker)
 - Connect to WebSocket (interact via prompt)
   - Known supported commands:
     - Transactions: {"type": "timelineTransactions", after: '...' } // list of transactions with optional 'after' option to get the next list of transactions (after needs the hash from the previous call)

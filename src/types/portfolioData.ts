@@ -1,8 +1,6 @@
 export enum PortfolioEventType {
   Buy = 'Buy',
-  LimitBuy = 'Limit Buy',
   Sell = 'Sell',
-  LimitSell = 'Limit Sell',
   Dividend = 'Dividend',
   CashGain = 'Cash Gain',
   CashExpense = 'Cash Expense',
@@ -11,11 +9,7 @@ export enum PortfolioEventType {
 // Buy, Limit Buy, Sell, Limit Sell
 interface OrderTransaction {
   title: string;
-  eventType:
-    | PortfolioEventType.Buy
-    | PortfolioEventType.LimitBuy
-    | PortfolioEventType.Sell
-    | PortfolioEventType.LimitSell;
+  eventType: PortfolioEventType.Buy | PortfolioEventType.Sell;
   date: string;
   isin: string;
   price: string;
@@ -53,7 +47,7 @@ interface CashTransaction {
 }
 
 // Not real Trade Republic types, just used for our internal purposes
-// Used to simplify the data needed to build portfolio CSV export
+// Used to simplify the data needed to build a portfolio CSV
 export type PortfolioData = (
   | OrderTransaction
   | DividendTransaction
