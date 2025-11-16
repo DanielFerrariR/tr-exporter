@@ -4,7 +4,7 @@ import { getExchangeFromIsin } from '../../utils/getExchangeFromIsin';
 import { saveFile } from '../../utils/saveFile';
 
 const OUTPUT_DIRECTORY = 'build';
-const FILE_NAME = 'snowball_transactions.csv';
+const FILE_NAME = 'snowballTransactions.csv';
 
 const HEADERS = [
   'Event',
