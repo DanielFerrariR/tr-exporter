@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { SIGN_TO_CURRENCY_MAP, TRANSACTION_EVENT_TYPE } from '../constants';
 import {
+  ORDER_TYPE,
   PortfolioData,
-  PortfolioEventType,
   Transaction,
   TransactionDocumentsSection,
   TransactionHeaderSection,
@@ -34,12 +34,9 @@ export const mapTransactionsToPortfolioData = async (
     if (!transaction.eventType) continue;
 
     // Dividends
-    if (
-      transaction.eventType ===
-      TRANSACTION_EVENT_TYPE.SSP_CORPORATE_ACTION_INVOICE_CASH
-    ) {
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
       let title = transaction.title;
-      let eventType = PortfolioEventType.Dividend;
+      let eventType = transaction.eventType;
       let date = transaction.timestamp.slice(0, 10);
       let isin = transaction.icon.split('/')[1];
       let exchange = 'LS-X';
@@ -87,8 +84,9 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // Received Stock gifts when opening an account
-    if (transaction.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK_REFUNDED) {
-      let eventType = PortfolioEventType.Buy; // Trade Republic uses "Buy" for received stocks
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK) {
+      let eventType = transaction.eventType;
+      let orderType = identifyBuyOrSell(transaction);
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
       let exchange = 'LS-X';
@@ -126,6 +124,7 @@ export const mapTransactionsToPortfolioData = async (
       portfolioData.push({
         title,
         eventType,
+        orderType,
         date,
         isin,
         price,
@@ -140,11 +139,9 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // Received stock gifts from a friend
-    if (
-      transaction.eventType ===
-      TRANSACTION_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY
-    ) {
-      let eventType = PortfolioEventType.Buy; // Trade Republic uses "Buy" for received stocks
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT) {
+      let eventType = transaction.eventType;
+      let orderType = identifyBuyOrSell(transaction);
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
       let exchange = 'LS-X';
@@ -182,6 +179,7 @@ export const mapTransactionsToPortfolioData = async (
       portfolioData.push({
         title,
         eventType,
+        orderType,
         date,
         isin,
         price,
@@ -197,15 +195,13 @@ export const mapTransactionsToPortfolioData = async (
 
     // Buy and Sell transactions (trades, savings plans, roundups and 15 euros per month bonus)
     if (
-      transaction.eventType === TRANSACTION_EVENT_TYPE.TRADING_TRADE_EXECUTED ||
-      transaction.eventType ===
-        TRANSACTION_EVENT_TYPE.TRADING_SAVINGSPLAN_EXECUTED ||
-      transaction.eventType ===
-        TRANSACTION_EVENT_TYPE.BENEFITS_SPARE_CHANGE_EXECUTION ||
-      transaction.eventType ===
-        TRANSACTION_EVENT_TYPE.BENEFITS_SAVEBACK_EXECUTION
+      transaction.eventType === TRANSACTION_EVENT_TYPE.TRADE ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.CASHBACK
     ) {
-      let eventType = identifyBuyOrSell(transaction);
+      let eventType = transaction.eventType;
+      let orderType = identifyBuyOrSell(transaction);
       let date = transaction.timestamp.slice(0, 10);
       let isin = transaction.icon.split('/')[1];
       let exchange = 'LS-X';
@@ -291,6 +287,7 @@ export const mapTransactionsToPortfolioData = async (
       const newTransaction = {
         title,
         eventType,
+        orderType,
         date,
         isin,
         price,
@@ -306,8 +303,9 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // Interest
-    if (transaction.eventType === TRANSACTION_EVENT_TYPE.INTEREST_PAYOUT) {
-      let eventType = PortfolioEventType.CashGain;
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.INTEREST) {
+      let eventType = transaction.eventType;
+      let orderType = ORDER_TYPE.CASH_GAIN;
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
       let currency = transaction.amount.currency;
@@ -352,6 +350,7 @@ export const mapTransactionsToPortfolioData = async (
       const newTransaction = {
         title,
         eventType,
+        orderType,
         date,
         amount,
         currency,
@@ -364,14 +363,13 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // tax corrections
-    if (
-      transaction.eventType ===
-      TRANSACTION_EVENT_TYPE.SSP_TAX_CORRECTION_INVOICE
-    ) {
-      let eventType =
-        transaction.amount.value > 0
-          ? PortfolioEventType.CashGain
-          : PortfolioEventType.CashExpense;
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION) {
+      let eventType = transaction.eventType;
+      let orderType = parseToBigNumber(
+        transaction.amount.value.toString(),
+      ).isGreaterThan(0)
+        ? ORDER_TYPE.CASH_GAIN
+        : ORDER_TYPE.CASH_LOSS;
       let date = transaction.timestamp.slice(0, 10);
       let title = transaction.title;
       let amount = parseToBigNumber(
@@ -384,6 +382,7 @@ export const mapTransactionsToPortfolioData = async (
       const newTransaction = {
         title,
         eventType,
+        orderType,
         date,
         amount,
         currency,

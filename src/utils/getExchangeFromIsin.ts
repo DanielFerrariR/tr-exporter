@@ -1,17 +1,18 @@
 import axios from 'axios';
 import { parse } from 'node-html-parser';
 
-const symbolToExchange: Record<string, string> = {};
+const isinToExchange: Record<string, string> = {};
 
-// Using Xetra as the default as Snowball Analytics doesn't support Lang & Schwarz exchange
-// if the stock/etf isn't tradable in Xetra it will fallback to Frankfurt
-export const getExchangeFromSymbol = async (symbol: string) => {
-  if (symbolToExchange[symbol]) return symbolToExchange[symbol];
+// Get the exchange for a given isin
+// Needed for the case the portfolio tracker doesn't support Lang & Schwarz exchange
+// Using Xetra as the default and if the stock/etf isn't tradable in Xetra it will fallback to Frankfurt
+export const getExchangeFromIsin = async (isin: string) => {
+  if (isinToExchange[isin]) return isinToExchange[isin];
 
-  // We don't know if its a etf or stock yet with just the symbol, so we need to check both
+  // We don't know if its a etf or stock yet with just the isin, so we need to check both
   const [stockResponse, etfResponse] = await Promise.allSettled([
-    axios.get(`https://www.boerse-frankfurt.de/aktie/${symbol}`),
-    axios.get(`https://www.boerse-frankfurt.de/etf/${symbol}`),
+    axios.get(`https://www.boerse-frankfurt.de/aktie/${isin}`),
+    axios.get(`https://www.boerse-frankfurt.de/etf/${isin}`),
   ]);
 
   const stockData =
@@ -32,10 +33,10 @@ export const getExchangeFromSymbol = async (symbol: string) => {
     stockExchanges?.some((item) => item?.innerText.includes('Xetra')) ||
     etfExchanges?.some((item) => item?.innerText.includes('Xetra'))
   ) {
-    symbolToExchange[symbol] = 'XETRA';
+    isinToExchange[isin] = 'XETRA';
     return 'XETRA';
   }
 
-  symbolToExchange[symbol] = 'F';
+  isinToExchange[isin] = 'F';
   return 'F';
 };

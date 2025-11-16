@@ -1,6 +1,7 @@
-import { PortfolioData, PortfolioEventType } from '../../types';
+import { TRANSACTION_EVENT_TYPE } from '../../constants';
+import { ORDER_TYPE, PortfolioData } from '../../types';
+import { getExchangeFromIsin } from '../../utils/getExchangeFromIsin';
 import { saveFile } from '../../utils/saveFile';
-import { getExchangeFromSymbol } from './symbolToExchange';
 
 const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowball_transactions.csv';
@@ -48,11 +49,11 @@ export const convertTransactionsToSnowballCsv = async (
     let note = '';
 
     // Dividends
-    if (item.eventType === PortfolioEventType.Dividend) {
-      event = item.eventType;
+    if (item.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
+      event = 'Dividend';
       date = item.date;
       symbol = item.isin;
-      exchange = await getExchangeFromSymbol(item.isin);
+      exchange = await getExchangeFromIsin(item.isin);
       note = item.title;
       quantity = item.dividendTotal;
       price = item.dividendPerShare;
@@ -61,17 +62,17 @@ export const convertTransactionsToSnowballCsv = async (
       feeCurrency = item.feeCurrency;
     }
 
-    // Buy and Sell transactions
+    // Buy and Sell transactions (trades, savings plans, roundups and 15 euros per month bonus)
     else if (
-      item.eventType === PortfolioEventType.Buy ||
-      item.eventType === PortfolioEventType.Sell ||
-      item.eventType === PortfolioEventType.LimitBuy ||
-      item.eventType === PortfolioEventType.LimitSell
+      item.eventType === TRANSACTION_EVENT_TYPE.TRADE ||
+      item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
+      item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
+      item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK
     ) {
-      event = item.eventType;
+      event = item.orderType === ORDER_TYPE.BUY ? 'Buy' : 'Sell';
       date = item.date;
       symbol = item.isin;
-      exchange = await getExchangeFromSymbol(symbol);
+      exchange = await getExchangeFromIsin(symbol);
       note = item.title;
       quantity = item.quantity;
       price = item.price;
@@ -82,10 +83,11 @@ export const convertTransactionsToSnowballCsv = async (
 
     // Cash Gain and Cash Expense
     else if (
-      item.eventType === PortfolioEventType.CashGain ||
-      item.eventType === PortfolioEventType.CashExpense
+      item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
+      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
     ) {
-      event = item.eventType;
+      event =
+        item.orderType === ORDER_TYPE.CASH_GAIN ? 'Cash_Gain' : 'Cash_Expense';
       date = item.date;
       symbol = ''; // Cash transactions don't have ISIN
       exchange = ''; // Cash transactions don't have exchange

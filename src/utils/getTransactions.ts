@@ -15,11 +15,9 @@ import {
   SUBSCRIPTION_TYPES,
   TRANSACTION_EVENT_TYPE,
 } from '../constants';
-import {
-  identifyActivityEventType,
-  identifyTransactionEventType,
-} from './identifyEventType';
+import { identifyTransactionEventType } from './identifyEventType';
 import { mapTransactionsToPortfolioData } from './mapTransactionsToPortfolioData';
+import { identifyActivityEventType } from './identifyActivityType';
 
 const OUTPUT_DIRECTORY = 'build';
 const TRANSACTIONS_FILE_NAME = 'transactions.json';
@@ -127,8 +125,8 @@ export const getTransactions = async (): Promise<{
                 (activity) =>
                   !!activity.eventType &&
                   [
-                    ACTIVITY_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY,
-                    ACTIVITY_EVENT_TYPE.STOCK_PERK_REFUNDED,
+                    ACTIVITY_EVENT_TYPE.GIFT,
+                    ACTIVITY_EVENT_TYPE.STOCK_PERK,
                   ].includes(activity.eventType),
               )
               .map((activity) => ({
@@ -150,10 +148,9 @@ export const getTransactions = async (): Promise<{
                   payload: activity.id,
                 },
                 eventType:
-                  activity.eventType ===
-                  ACTIVITY_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY
-                    ? TRANSACTION_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY
-                    : TRANSACTION_EVENT_TYPE.STOCK_PERK_REFUNDED,
+                  activity.eventType === ACTIVITY_EVENT_TYPE.GIFT
+                    ? TRANSACTION_EVENT_TYPE.GIFT
+                    : TRANSACTION_EVENT_TYPE.STOCK_PERK,
                 cashAccountNumber: null,
                 hidden: false,
                 deleted: false,
@@ -205,10 +202,7 @@ export const getTransactions = async (): Promise<{
             const transaction = transactions[transactionIndex];
 
             // Adding gift amount to the transaction if it's a received gift
-            if (
-              transaction.eventType ===
-              TRANSACTION_EVENT_TYPE.GIFTING_RECIPIENT_ACTIVITY
-            ) {
+            if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT) {
               transaction.sections?.forEach((section) => {
                 if ('title' in section && section.title === 'Transaction') {
                   const tableSection = section as TransactionTableSection;
