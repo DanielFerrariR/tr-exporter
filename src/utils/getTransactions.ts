@@ -123,7 +123,7 @@ export const getTransactions = async (): Promise<{
                 (activity) =>
                   !!activity.eventType &&
                   [
-                    ACTIVITY_EVENT_TYPE.GIFT,
+                    ACTIVITY_EVENT_TYPE.RECEIVED_GIFT,
                     ACTIVITY_EVENT_TYPE.STOCK_PERK,
                   ].includes(activity.eventType),
               )
@@ -146,8 +146,8 @@ export const getTransactions = async (): Promise<{
                   payload: activity.id,
                 },
                 eventType:
-                  activity.eventType === ACTIVITY_EVENT_TYPE.GIFT
-                    ? TRANSACTION_EVENT_TYPE.GIFT
+                  activity.eventType === ACTIVITY_EVENT_TYPE.RECEIVED_GIFT
+                    ? TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
                     : TRANSACTION_EVENT_TYPE.STOCK_PERK,
                 cashAccountNumber: null,
                 hidden: false,
@@ -200,7 +200,9 @@ export const getTransactions = async (): Promise<{
             const transaction = transactions[transactionIndex];
 
             // Adding gift amount to the transaction if it's a received gift
-            if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT) {
+            if (
+              transaction.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
+            ) {
               transaction.sections?.forEach((section) => {
                 if ('title' in section && section.title === 'Transaction') {
                   const tableSection = section as TransactionTableSection;

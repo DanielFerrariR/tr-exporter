@@ -155,7 +155,7 @@ export const mapTransactionsToPortfolioData = async (
     }
 
     // Received stock gifts from a friend
-    if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT) {
+    if (transaction.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT) {
       const eventType = transaction.eventType;
       const type = identifyBuyOrSell(transaction);
       const date = transaction.timestamp.slice(0, 10);

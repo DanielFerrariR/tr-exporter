@@ -47,12 +47,12 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
   }
 
-  // Stock Gift
+  // Sent Stock Gift (Received gifts aren't included in transactions list)
   if (
     transaction.title === 'Stock Gift' &&
     transaction.subtitle === 'Accepted'
   ) {
-    return TRANSACTION_EVENT_TYPE.GIFT;
+    return TRANSACTION_EVENT_TYPE.SENT_GIFT;
   }
 
   // Stock Perk
