@@ -1,3 +1,4 @@
+export * from './getDividendPdfData';
 export * from './getTransactions';
 export * from './identifyBuyOrSell';
 export * from './identifyEventType';

@@ -1,7 +1,3 @@
-import axios from 'axios';
-import { createHash } from 'crypto';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
 import { SIGN_TO_CURRENCY_MAP, TRANSACTION_EVENT_TYPE } from '../constants';
 import {
   PortfolioData,
@@ -12,69 +8,12 @@ import {
   TransactionTableSection,
 } from '../types';
 import {
-  parseTransactionDividendPdf,
-  TransactionPdfData,
-} from './parseTransactionDividendPdf';
+  getDividendPdfData,
+  loadDividendPdfsData,
+  saveDividendPdfsData,
+} from './getDividendPdfData';
 import { identifyBuyOrSell } from './identifyBuyOrSell';
 import { parseToBigNumber } from './parseToBigNumber';
-
-const DIVIDEND_PDFS_DATA_FILE = join(
-  process.cwd(),
-  'build',
-  'dividendPdfsData.json',
-);
-
-/**
- * Generates a unique key for caching PDF data based on the document URL
- */
-const getPdfFilename = (
-  documentUrl: string,
-  date: string,
-  isin: string,
-): string => {
-  const urlHash = createHash('md5')
-    .update(documentUrl)
-    .digest('hex')
-    .slice(0, 8);
-  return `${date}_${isin}_${urlHash}.pdf`;
-};
-
-/**
- * Loads dividend PDFs data from JSON file
- */
-const loadDividendPdfsData = (): Record<string, TransactionPdfData> => {
-  if (!existsSync(DIVIDEND_PDFS_DATA_FILE)) {
-    return {};
-  }
-
-  try {
-    const data = readFileSync(DIVIDEND_PDFS_DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.warn(
-      `Error reading ${DIVIDEND_PDFS_DATA_FILE}, will parse PDFs instead:`,
-      error,
-    );
-    return {};
-  }
-};
-
-/**
- * Saves dividend PDFs data to JSON file
- */
-const saveDividendPdfsData = (
-  pdfData: Record<string, TransactionPdfData>,
-): void => {
-  try {
-    writeFileSync(
-      DIVIDEND_PDFS_DATA_FILE,
-      JSON.stringify(pdfData, null, 2),
-      'utf8',
-    );
-  } catch (error) {
-    console.error(`Error saving ${DIVIDEND_PDFS_DATA_FILE}:`, error);
-  }
-};
 
 export const mapTransactionsToPortfolioData = async (
   transactions: Transaction[],
@@ -142,25 +81,15 @@ export const mapTransactionsToPortfolioData = async (
             continue;
           }
 
-          // Generate filename for the PDF
-          const pdfFilename = getPdfFilename(documentUrl, date, isin);
+          // Get PDF data (from cache or by downloading and parsing)
+          const { data: parsedPdf, cacheUpdated } = await getDividendPdfData(
+            documentUrl,
+            date,
+            isin,
+            dividendPdfsData,
+          );
 
-          // Check if we have cached data in JSON
-          let parsedPdf: TransactionPdfData;
-          if (dividendPdfsData[pdfFilename]) {
-            // Use cached data from JSON
-            parsedPdf = dividendPdfsData[pdfFilename];
-          } else {
-            // Download and parse PDF, then cache the result
-            const response = await axios.get(documentUrl, {
-              responseType: 'arraybuffer',
-            });
-            const pdfBuffer = Buffer.from(response.data);
-
-            parsedPdf = await parseTransactionDividendPdf(pdfBuffer);
-
-            // Cache the parsed data
-            dividendPdfsData[pdfFilename] = parsedPdf;
+          if (cacheUpdated) {
             dividendPdfsDataUpdated = true;
           }
 
