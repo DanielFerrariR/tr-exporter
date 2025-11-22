@@ -7,8 +7,8 @@
     "start": "tsx src/index.ts",
     "format": "prettier --write .",
     "check": "prettier --check .",
-    "lint": "eslint . --ext .js,.ts",
-    "lint:fix": "eslint . --ext .js,.ts --fix"
+    "lint": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts",
+    "lint:fix": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts --fix"
   },
   "license": "ISC",
   "devDependencies": {
