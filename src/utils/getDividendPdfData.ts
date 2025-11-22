@@ -1,17 +1,15 @@
 import axios from 'axios';
 import { createHash } from 'crypto';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
 import {
   parseTransactionDividendPdf,
   TransactionPdfData,
 } from './parseTransactionDividendPdf';
 
-const DIVIDEND_PDFS_DATA_FILE = join(
-  process.cwd(),
-  'build',
-  'dividendPdfsData.json',
-);
+const getDividendPdfsDataFilePath = (accountNumber: string): string => {
+  return join(process.cwd(), 'build', accountNumber, 'dividendPdfsData.json');
+};
 
 /**
  * Generates a unique key for caching PDF data based on the document URL
@@ -31,13 +29,16 @@ export const getPdfFilename = (
 /**
  * Loads dividend PDFs data from JSON file
  */
-export const loadDividendPdfsData = (): Record<string, TransactionPdfData> => {
-  if (!existsSync(DIVIDEND_PDFS_DATA_FILE)) {
+export const loadDividendPdfsData = (
+  accountNumber: string,
+): Record<string, TransactionPdfData> => {
+  const filePath = getDividendPdfsDataFilePath(accountNumber);
+  if (!existsSync(filePath)) {
     return {};
   }
 
   try {
-    const data = readFileSync(DIVIDEND_PDFS_DATA_FILE, 'utf8');
+    const data = readFileSync(filePath, 'utf8');
     return JSON.parse(data);
   } catch {
     // Silently return empty object if file doesn't exist or can't be read
@@ -51,15 +52,17 @@ export const loadDividendPdfsData = (): Record<string, TransactionPdfData> => {
  */
 export const saveDividendPdfsData = (
   pdfData: Record<string, TransactionPdfData>,
+  accountNumber: string,
 ): void => {
   try {
-    writeFileSync(
-      DIVIDEND_PDFS_DATA_FILE,
-      JSON.stringify(pdfData, null, 2),
-      'utf8',
-    );
+    const filePath = getDividendPdfsDataFilePath(accountNumber);
+    // Ensure directory exists
+    mkdirSync(dirname(filePath), { recursive: true });
+
+    writeFileSync(filePath, JSON.stringify(pdfData, null, 2), 'utf8');
   } catch (error) {
-    console.error(`Error saving ${DIVIDEND_PDFS_DATA_FILE}:`, error);
+    const filePath = getDividendPdfsDataFilePath(accountNumber);
+    console.error(`Error saving ${filePath}:`, error);
   }
 };
 

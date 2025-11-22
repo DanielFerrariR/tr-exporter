@@ -17,6 +17,7 @@ import { parseToBigNumber } from './parseToBigNumber';
 
 export const mapTransactionsToPortfolioData = async (
   transactions: Transaction[],
+  accountNumber: string,
 ): Promise<PortfolioData> => {
   if (!transactions?.length) {
     console.warn(
@@ -26,7 +27,7 @@ export const mapTransactionsToPortfolioData = async (
   }
 
   // Load existing dividend PDFs data from JSON
-  const dividendPdfsData = loadDividendPdfsData();
+  const dividendPdfsData = loadDividendPdfsData(accountNumber);
   let dividendPdfsDataUpdated = false;
 
   const portfolioData: PortfolioData = [];
@@ -369,7 +370,10 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Tax',
           );
 
-          const taxValue = taxSubSection?.detail?.text;
+          // displayValue is the old format, text is the new format
+          const taxValue =
+            taxSubSection?.detail?.displayValue?.text ??
+            taxSubSection?.detail?.text;
           feeTax = taxValue?.slice(1) ?? '';
           if (feeTax === '0.00') feeTax = '';
           const taxCurrencySign = taxValue?.[0];
@@ -429,7 +433,7 @@ export const mapTransactionsToPortfolioData = async (
 
   // Save updated dividend PDFs data to JSON if it was modified
   if (dividendPdfsDataUpdated) {
-    saveDividendPdfsData(dividendPdfsData);
+    saveDividendPdfsData(dividendPdfsData, accountNumber);
   }
 
   return portfolioData;

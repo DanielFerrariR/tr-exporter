@@ -18,8 +18,74 @@ const MENU_OPTIONS = {
   EXIT: 'exit',
 };
 
-const TRANSACTIONS_PATH = 'build/transactions.json';
-const PORTFOLIO_DATA_PATH = 'build/portfolioData.json';
+// Account number will be set after downloading transactions
+let accountNumber: string | null = null;
+
+const getTransactionsPath = (accountNum: string | null): string => {
+  if (!accountNum) {
+    throw new Error(
+      'Account number not available. Please download transactions first.',
+    );
+  }
+  return `build/${accountNum}/transactions.json`;
+};
+
+const getPortfolioDataPath = (accountNum: string | null): string => {
+  if (!accountNum) {
+    throw new Error(
+      'Account number not available. Please download transactions first.',
+    );
+  }
+  return `build/${accountNum}/portfolioData.json`;
+};
+
+// Find all account numbers by scanning build folder
+const findAllAccountNumbers = (): string[] => {
+  if (!fs.existsSync('build')) {
+    return [];
+  }
+
+  const entries = fs.readdirSync('build', { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+};
+
+// Get account number: use stored value, or find from build folder
+// If multiple exist, prompt user to choose
+const getAccountNumber = async (): Promise<string | null> => {
+  // Use stored account number if available
+  if (accountNumber) {
+    return accountNumber;
+  }
+
+  // Find all account numbers in build folder
+  const accountNumbers = findAllAccountNumbers();
+
+  if (accountNumbers.length === 0) {
+    return null;
+  }
+
+  // If only one exists, use it automatically
+  if (accountNumbers.length === 1) {
+    return accountNumbers[0];
+  }
+
+  // If multiple exist, let user choose
+  const { selectedAccountNumber } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'selectedAccountNumber',
+      message: 'Multiple account directories found. Please select one:',
+      choices: accountNumbers.map((accNum) => ({
+        name: accNum,
+        value: accNum,
+      })),
+    },
+  ]);
+
+  return selectedAccountNumber;
+};
 
 // Setup graceful exit handler
 const setupExitHandler = () => {
@@ -29,9 +95,21 @@ const setupExitHandler = () => {
   });
 };
 
-const loadTransactions = (): Transaction[] | null => {
-  if (!fs.existsSync(TRANSACTIONS_PATH)) {
-    console.error(`Error: ${TRANSACTIONS_PATH} not found.`);
+const loadTransactions = async (): Promise<Transaction[] | null> => {
+  // Get account number (with user selection if multiple exist)
+  const accountNum = await getAccountNumber();
+
+  if (!accountNum) {
+    console.error('Error: Account number not found.');
+    console.error(
+      'Please download transactions first using option 1 before converting.',
+    );
+    return null;
+  }
+
+  const transactionsPath = getTransactionsPath(accountNum);
+  if (!fs.existsSync(transactionsPath)) {
+    console.error(`Error: ${transactionsPath} not found.`);
     console.error(
       'Please download transactions first using option 1 before converting.',
     );
@@ -39,17 +117,29 @@ const loadTransactions = (): Transaction[] | null => {
   }
 
   try {
-    console.log(`Reading transactions from ${TRANSACTIONS_PATH}...`);
-    return JSON.parse(fs.readFileSync(TRANSACTIONS_PATH, 'utf8'));
+    console.log(`Reading transactions from ${transactionsPath}...`);
+    return JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
   } catch (error) {
-    console.error(`Error reading ${TRANSACTIONS_PATH}:`, error);
+    console.error(`Error reading ${transactionsPath}:`, error);
     return null;
   }
 };
 
-const loadPortfolioData = (): PortfolioData | null => {
-  if (!fs.existsSync(PORTFOLIO_DATA_PATH)) {
-    console.error(`Error: ${PORTFOLIO_DATA_PATH} not found.`);
+const loadPortfolioData = async (): Promise<PortfolioData | null> => {
+  // Get account number (with user selection if multiple exist)
+  const accountNum = await getAccountNumber();
+
+  if (!accountNum) {
+    console.error('Error: Account number not found.');
+    console.error(
+      'Please download transactions first using option 1 before converting.',
+    );
+    return null;
+  }
+
+  const portfolioDataPath = getPortfolioDataPath(accountNum);
+  if (!fs.existsSync(portfolioDataPath)) {
+    console.error(`Error: ${portfolioDataPath} not found.`);
     console.error(
       'Please convert transactions to portfolio data first using option 2.',
     );
@@ -57,10 +147,10 @@ const loadPortfolioData = (): PortfolioData | null => {
   }
 
   try {
-    console.log(`Reading portfolio data from ${PORTFOLIO_DATA_PATH}...`);
-    return JSON.parse(fs.readFileSync(PORTFOLIO_DATA_PATH, 'utf8'));
+    console.log(`Reading portfolio data from ${portfolioDataPath}...`);
+    return JSON.parse(fs.readFileSync(portfolioDataPath, 'utf8'));
   } catch (error) {
-    console.error(`Error reading ${PORTFOLIO_DATA_PATH}:`, error);
+    console.error(`Error reading ${portfolioDataPath}:`, error);
     return null;
   }
 };
@@ -110,7 +200,9 @@ const showMenu = async (): Promise<void> => {
             console.error('Login failed. Please try again.');
             continue;
           }
-          await getTransactions();
+          const result = await getTransactions();
+          // Store the account number for later use
+          accountNumber = result.accountInformation.accountNumber;
           console.log('Transactions downloaded successfully.');
         } catch (error) {
           console.error('Error downloading transactions:', error);
@@ -119,17 +211,28 @@ const showMenu = async (): Promise<void> => {
 
       if (action === MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO) {
         try {
-          const transactions = loadTransactions();
+          const transactions = await loadTransactions();
           if (!transactions) continue;
 
+          // Get account number (with user selection if multiple exist)
+          const accountNum = await getAccountNumber();
+          if (!accountNum) {
+            console.error(
+              'Error: Account number not found. Cannot convert transactions to portfolio data.',
+            );
+            continue;
+          }
+
           console.log('Converting transactions to portfolio data...');
-          const portfolioData =
-            await mapTransactionsToPortfolioData(transactions);
+          const portfolioData = await mapTransactionsToPortfolioData(
+            transactions,
+            accountNum,
+          );
 
           saveFile(
             JSON.stringify(portfolioData, null, 2),
             'portfolioData.json',
-            'build',
+            `build/${accountNum}`,
           );
           console.log('Portfolio data generated successfully.');
         } catch (error) {
@@ -142,8 +245,17 @@ const showMenu = async (): Promise<void> => {
 
       if (action === MENU_OPTIONS.CONVERT_TRANSACTIONS) {
         try {
-          const portfolioData = loadPortfolioData();
+          const portfolioData = await loadPortfolioData();
           if (!portfolioData) continue;
+
+          // Get account number (with user selection if multiple exist)
+          const accountNum = await getAccountNumber();
+          if (!accountNum) {
+            console.error(
+              'Error: Account number not found. Cannot convert portfolio data.',
+            );
+            continue;
+          }
 
           // Show available exporters
           const { exporterId } = await inquirer.prompt([
@@ -172,7 +284,7 @@ const showMenu = async (): Promise<void> => {
             continue;
           }
 
-          await exporter.convert(portfolioData);
+          await exporter.convert(portfolioData, accountNum);
           console.log(`Conversion to ${exporter.name} completed successfully.`);
         } catch (error: unknown) {
           // Handle Ctrl+C (SIGINT) gracefully

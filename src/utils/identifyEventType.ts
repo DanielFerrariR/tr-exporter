@@ -45,7 +45,10 @@ export const identifyTransactionEventType = (
   // Tax corrections
   if (
     transaction.subtitle === 'Cash dividend corrected' ||
-    (transaction.title === 'Tax correction' && transaction.subtitle === null)
+    (transaction.title === 'Tax correction' && transaction.subtitle === null) ||
+    transaction.subtitle === 'Pre-Determined Tax Base' ||
+    (transaction.title === 'Tax Settlement' &&
+      transaction.subtitle === 'Tax booking')
   ) {
     return TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
   }

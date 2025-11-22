@@ -1,6 +1,6 @@
 export * from './api';
 export * from './transactions';
 export * from './activities';
-export * from './cash';
+export * from './accountInformation';
 export * from './errors';
 export * from './portfolioData';

@@ -6,6 +6,7 @@ import {
   Activity,
   ActivityResponse,
   PortfolioData,
+  AccountInformation,
 } from '../types';
 import { TradeRepublicAPI } from '../api';
 import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '../constants';
@@ -23,8 +24,14 @@ export const getTransactions = async (): Promise<{
   transactions: Transaction[];
   activities: Activity[];
   portfolioData: PortfolioData;
+  accountInformation: AccountInformation;
 }> =>
   new Promise((resolve, reject) => {
+    const accountInformation: AccountInformation = {
+      accountNumber: '',
+      currencyId: 'EUR',
+      amount: '',
+    };
     let activities: Activity[] = [];
     let transactions: Transaction[] = [];
     const transactionsToFetchDetailsFor = new Set<string>();
@@ -37,12 +44,11 @@ export const getTransactions = async (): Promise<{
         try {
           console.log('Received "connected" message from server.');
           console.log('\n--- WebSocket Ready ---');
-          console.log('Starting automatic fetching of transactions...');
+          console.log('Starting to fetch the account details...');
 
           TradeRepublicAPI.getInstance().sendSubscriptionMessage(
-            SUBSCRIPTION_TYPES.ACTIVITIES,
+            SUBSCRIPTION_TYPES.CASH,
           );
-          console.log('Sent initial activity request.');
         } catch (error) {
           console.error('Error during initial connection:', error);
           reject(error);
@@ -56,6 +62,26 @@ export const getTransactions = async (): Promise<{
         // transactionDetails or keep-alive here
         if (!jsonPayload) {
           console.log(`Received message: ${message}`);
+          return;
+        }
+
+        if (subscription?.type === SUBSCRIPTION_TYPES.CASH) {
+          const cashResponse = jsonPayload as AccountInformation;
+          // Update accountInformation with the received data
+          accountInformation.accountNumber = cashResponse.accountNumber;
+          accountInformation.currencyId = cashResponse.currencyId;
+          accountInformation.amount = cashResponse.amount;
+
+          console.log('Account information received.');
+          console.log(`Account number: ${accountInformation.accountNumber}`);
+          console.log(`Currency: ${accountInformation.currencyId}`);
+          console.log(`Amount: ${accountInformation.amount}`);
+          console.log('Starting automatic fetching of transactions...');
+
+          TradeRepublicAPI.getInstance().sendSubscriptionMessage(
+            SUBSCRIPTION_TYPES.ACTIVITIES,
+          );
+          console.log('Sent initial activity request.');
           return;
         }
 
@@ -83,7 +109,7 @@ export const getTransactions = async (): Promise<{
             saveFile(
               JSON.stringify(activities, null, 2),
               ACTIVITIES_FILE_NAME,
-              OUTPUT_DIRECTORY,
+              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
             );
             TradeRepublicAPI.getInstance().sendSubscriptionMessage(
               SUBSCRIPTION_TYPES.TRANSACTIONS,
@@ -172,21 +198,29 @@ export const getTransactions = async (): Promise<{
             saveFile(
               JSON.stringify(transactions, null, 2),
               TRANSACTIONS_FILE_NAME,
-              OUTPUT_DIRECTORY,
+              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
             );
 
             console.log('Generating portfolio data...');
             const portfolioData: PortfolioData =
-              await mapTransactionsToPortfolioData(transactions);
+              await mapTransactionsToPortfolioData(
+                transactions,
+                accountInformation.accountNumber,
+              );
 
             saveFile(
               JSON.stringify(portfolioData, null, 2),
               PORTFOLIO_DATA_FILE_NAME,
-              OUTPUT_DIRECTORY,
+              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
             );
 
             TradeRepublicAPI.getInstance().disconnect();
-            resolve({ transactions, activities, portfolioData });
+            resolve({
+              transactions,
+              activities,
+              portfolioData,
+              accountInformation,
+            });
           } catch (error) {
             console.error(
               'Error processing transaction details message:',

@@ -3,7 +3,6 @@ import { TRANSACTION_TYPE, PortfolioData } from '../../types';
 import { getExchangeFromIsin } from '../../utils/getExchangeFromIsin';
 import { saveFile } from '../../utils/saveFile';
 
-const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowballTransactions.csv';
 
 const HEADERS = [
@@ -22,6 +21,7 @@ const HEADERS = [
 
 export const convertTransactionsToSnowballCsv = async (
   data: PortfolioData,
+  accountNumber: string,
 ): Promise<void> => {
   if (!data?.length) {
     console.warn(
@@ -69,7 +69,7 @@ export const convertTransactionsToSnowballCsv = async (
       item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
       item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
       item.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK ||
-      item.eventType === TRANSACTION_EVENT_TYPE.GIFT
+      item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
     ) {
       event = item.type;
       date = item.date;
@@ -121,5 +121,5 @@ export const convertTransactionsToSnowballCsv = async (
   }
 
   const csvString = csvRows.join('\n');
-  saveFile(csvString, FILE_NAME, OUTPUT_DIRECTORY);
+  saveFile(csvString, FILE_NAME, `build/${accountNumber}`);
 };
