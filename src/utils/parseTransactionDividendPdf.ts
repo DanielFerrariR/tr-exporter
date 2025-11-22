@@ -19,11 +19,19 @@ export const parseTransactionDividendPdf = async (
     const text = pdfData.text;
 
     // Extract shares and dividend per share from POSITION line
-    // Pattern: "SYMBOL\nISIN SHARES Stücke DIVIDEND_PER_SHARE CURRENCY TOTAL CURRENCY"
+    // Pattern 1: "SYMBOL\nISIN SHARES Stücke DIVIDEND_PER_SHARE CURRENCY TOTAL CURRENCY"
     // Example: "Realty Income\nUS7561091049 78.897459 Stücke 0.2695 USD 21.26 USD"
-    const positionMatch = text.match(
+    // Pattern 2: "ISIN: US89832Q1094\n10 Stk. 0,52 USD 5,20 USD"
+    let positionMatch = text.match(
       /([A-Z0-9]{12})\s+([\d.,]+)\s+Stücke\s+([\d.,]+)\s+([A-Z]{3})\s+([\d.,]+)\s+([A-Z]{3})/,
     );
+
+    // Try alternative format with "Stk." instead of "Stücke"
+    if (!positionMatch) {
+      positionMatch = text.match(
+        /ISIN:\s*([A-Z0-9]{12})[\s\S]*?([\d.,]+)\s+Stk\.\s+([\d.,]+)\s+([A-Z]{3})\s+([\d.,]+)\s+([A-Z]{3})/,
+      );
+    }
 
     // Extract tax from "Quellensteuer" line
     // Pattern: "Quellensteuer für US-Emittenten -AMOUNT CURRENCY"
