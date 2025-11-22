@@ -5,7 +5,10 @@ export const identifyTransactionEventType = (
   transaction: Transaction,
 ): TRANSACTION_EVENT_TYPE | null => {
   // Dividends
-  if (transaction.subtitle === 'Cash dividend') {
+  if (
+    transaction.subtitle === 'Cash dividend' ||
+    transaction.subtitle === 'Dividend'
+  ) {
     return TRANSACTION_EVENT_TYPE.DIVIDEND;
   }
 
