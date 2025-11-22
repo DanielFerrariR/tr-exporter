@@ -1,16 +1,24 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
-import { getTransactions, interactiveSocketConnection, login } from './utils';
+import {
+  getTransactions,
+  interactiveSocketConnection,
+  login,
+  mapTransactionsToPortfolioData,
+  saveFile,
+} from './utils';
 import { EXPORTERS, getExporterById } from './exporters';
-import { PortfolioData } from './types';
+import { PortfolioData, Transaction } from './types';
 
 const MENU_OPTIONS = {
   DOWNLOAD_TRANSACTIONS: 'downloadTransactions',
+  CONVERT_TRANSACTIONS_TO_PORTFOLIO: 'convertTransactionsToPortfolio',
   CONVERT_TRANSACTIONS: 'convertTransactions',
   INTERACTIVE_SOCKET_CONNECTION: 'interactiveSocketConnection',
   EXIT: 'exit',
 };
 
+const TRANSACTIONS_PATH = 'build/transactions.json';
 const PORTFOLIO_DATA_PATH = 'build/portfolioData.json';
 
 // Setup graceful exit handler
@@ -21,9 +29,9 @@ const setupExitHandler = () => {
   });
 };
 
-const loadPortfolioData = (): PortfolioData | null => {
-  if (!fs.existsSync(PORTFOLIO_DATA_PATH)) {
-    console.error(`Error: ${PORTFOLIO_DATA_PATH} not found.`);
+const loadTransactions = (): Transaction[] | null => {
+  if (!fs.existsSync(TRANSACTIONS_PATH)) {
+    console.error(`Error: ${TRANSACTIONS_PATH} not found.`);
     console.error(
       'Please download transactions first using option 1 before converting.',
     );
@@ -31,7 +39,25 @@ const loadPortfolioData = (): PortfolioData | null => {
   }
 
   try {
-    console.log(`Reading transactions from ${PORTFOLIO_DATA_PATH}...`);
+    console.log(`Reading transactions from ${TRANSACTIONS_PATH}...`);
+    return JSON.parse(fs.readFileSync(TRANSACTIONS_PATH, 'utf8'));
+  } catch (error) {
+    console.error(`Error reading ${TRANSACTIONS_PATH}:`, error);
+    return null;
+  }
+};
+
+const loadPortfolioData = (): PortfolioData | null => {
+  if (!fs.existsSync(PORTFOLIO_DATA_PATH)) {
+    console.error(`Error: ${PORTFOLIO_DATA_PATH} not found.`);
+    console.error(
+      'Please convert transactions to portfolio data first using option 2.',
+    );
+    return null;
+  }
+
+  try {
+    console.log(`Reading portfolio data from ${PORTFOLIO_DATA_PATH}...`);
     return JSON.parse(fs.readFileSync(PORTFOLIO_DATA_PATH, 'utf8'));
   } catch (error) {
     console.error(`Error reading ${PORTFOLIO_DATA_PATH}:`, error);
@@ -54,7 +80,11 @@ const showMenu = async (): Promise<void> => {
               value: MENU_OPTIONS.DOWNLOAD_TRANSACTIONS,
             },
             {
-              name: 'Convert Downloaded Transactions',
+              name: 'Convert Transactions to Portfolio Data',
+              value: MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO,
+            },
+            {
+              name: 'Convert Portfolio Data to Export Format',
               value: MENU_OPTIONS.CONVERT_TRANSACTIONS,
             },
             {
@@ -84,6 +114,29 @@ const showMenu = async (): Promise<void> => {
           console.log('Transactions downloaded successfully.');
         } catch (error) {
           console.error('Error downloading transactions:', error);
+        }
+      }
+
+      if (action === MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO) {
+        try {
+          const transactions = loadTransactions();
+          if (!transactions) continue;
+
+          console.log('Converting transactions to portfolio data...');
+          const portfolioData =
+            await mapTransactionsToPortfolioData(transactions);
+
+          saveFile(
+            JSON.stringify(portfolioData, null, 2),
+            'portfolioData.json',
+            'build',
+          );
+          console.log('Portfolio data generated successfully.');
+        } catch (error) {
+          console.error(
+            'Error converting transactions to portfolio data:',
+            error,
+          );
         }
       }
 

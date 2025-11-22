@@ -17,8 +17,9 @@ Currently supported transactions:
 
 ## Features
 
-- Download transactions
-- Convert Downloaded Transactions for (please request support for unsupported trackers):
+- Download transactions from Trade Republic API
+- Convert transactions to portfolio data (regenerate portfolio data from existing transactions.json)
+- Convert portfolio data to export formats (please request support for unsupported trackers):
   - Snowball Analytics
 - Connect to WebSocket (interact via prompt)
   - Known supported commands:
@@ -37,6 +38,15 @@ Currently supported transactions:
 3 - pnpm install
 
 4 - pnpm start
+
+## Usage
+
+When you run `pnpm start`, you'll see a menu with the following options:
+
+1. **Download Transactions** - Fetches all transactions from Trade Republic API and saves them to `build/transactions.json`
+2. **Convert Transactions to Portfolio Data** - Converts existing `build/transactions.json` to `build/portfolioData.json` (useful if you've updated transaction processing logic and want to regenerate portfolio data without refetching)
+3. **Convert Portfolio Data to Export Format** - Converts `build/portfolioData.json` to your preferred export format (e.g., Snowball Analytics CSV)
+4. **Connect to WebSocket** - Interactive WebSocket connection for debugging and testing
 
 ## Tip
 

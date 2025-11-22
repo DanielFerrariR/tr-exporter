@@ -25,9 +25,27 @@ export const mapTransactionsToPortfolioData = async (
   const portfolioData: PortfolioData = [];
 
   for (const transaction of transactions) {
-    if (transaction.status === 'CANCELED') continue;
+    // Skip cancelled transactions - they shouldn't be included in portfolio data
+    if (transaction.status === 'CANCELED') {
+      continue;
+    }
 
-    if (!transaction.eventType) continue;
+    // Skip non-portfolio transactions (transfers, card payments, status indicators)
+    if (
+      transaction.eventType === TRANSACTION_EVENT_TYPE.TRANSFER ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.CARD_PAYMENT ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.STATUS_INDICATOR
+    ) {
+      continue;
+    }
+
+    // Skip transactions without eventType (shouldn't happen with current identifyEventType, but kept as safety net)
+    if (!transaction.eventType) {
+      console.warn(
+        `Transaction without eventType skipped: ${transaction.title} | ${transaction.subtitle}`,
+      );
+      continue;
+    }
 
     // Dividends
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {

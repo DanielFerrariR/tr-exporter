@@ -40,8 +40,50 @@ export const identifyTransactionEventType = (
   }
 
   // Tax corrections
-  if (transaction.subtitle === 'Cash dividend corrected') {
+  if (
+    transaction.subtitle === 'Cash dividend corrected' ||
+    (transaction.title === 'Tax correction' && transaction.subtitle === null)
+  ) {
     return TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
+  }
+
+  // Stock Gift
+  if (
+    transaction.title === 'Stock Gift' &&
+    transaction.subtitle === 'Accepted'
+  ) {
+    return TRANSACTION_EVENT_TYPE.GIFT;
+  }
+
+  // Stock Perk
+  if (
+    transaction.title === 'Stock Perk' &&
+    transaction.subtitle === 'Redeemed'
+  ) {
+    return TRANSACTION_EVENT_TYPE.STOCK_PERK;
+  }
+
+  // Transfers: subtitle is "Completed" or "Sent"
+  if (transaction.subtitle === 'Completed' || transaction.subtitle === 'Sent') {
+    return TRANSACTION_EVENT_TYPE.TRANSFER;
+  }
+
+  // Status indicators: subtitle is "Declined", "Cancelled", or "Card verification"
+  if (
+    transaction.subtitle === 'Declined' ||
+    transaction.subtitle === 'Cancelled' ||
+    transaction.subtitle === 'Card verification'
+  ) {
+    return TRANSACTION_EVENT_TYPE.STATUS_INDICATOR;
+  }
+
+  // Card payments: subtitle is null AND title is not a portfolio-related title
+  // Portfolio-related titles with null subtitle: "Interest", "Tax correction"
+  if (transaction.subtitle === null) {
+    const portfolioTitlesWithNullSubtitle = ['Interest', 'Tax correction'];
+    if (!portfolioTitlesWithNullSubtitle.includes(transaction.title)) {
+      return TRANSACTION_EVENT_TYPE.CARD_PAYMENT;
+    }
   }
 
   return null;
