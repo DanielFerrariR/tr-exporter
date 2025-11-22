@@ -18,6 +18,7 @@ import { getGiftTransactions } from './getGiftTransactions';
 const OUTPUT_DIRECTORY = 'build';
 const TRANSACTIONS_FILE_NAME = 'transactions.json';
 const ACTIVITIES_FILE_NAME = 'activities.json';
+const ACCOUNT_INFORMATION_FILE_NAME = 'accountInformation.json';
 const PORTFOLIO_DATA_FILE_NAME = 'portfolioData.json';
 
 export const getTransactions = async (): Promise<{
@@ -66,23 +67,28 @@ export const getTransactions = async (): Promise<{
         }
 
         if (subscription?.type === SUBSCRIPTION_TYPES.CASH) {
-          const cashResponse = jsonPayload as AccountInformation;
-          // Update accountInformation with the received data
-          accountInformation.accountNumber = cashResponse.accountNumber;
-          accountInformation.currencyId = cashResponse.currencyId;
-          accountInformation.amount = cashResponse.amount;
+          try {
+            const cashResponse = jsonPayload as AccountInformation;
+            // Update accountInformation with the received data
+            accountInformation.accountNumber = cashResponse.accountNumber;
+            accountInformation.currencyId = cashResponse.currencyId;
+            accountInformation.amount = cashResponse.amount;
 
-          console.log('Account information received.');
-          console.log(`Account number: ${accountInformation.accountNumber}`);
-          console.log(`Currency: ${accountInformation.currencyId}`);
-          console.log(`Amount: ${accountInformation.amount}`);
-          console.log('Starting automatic fetching of transactions...');
-
-          TradeRepublicAPI.getInstance().sendSubscriptionMessage(
-            SUBSCRIPTION_TYPES.ACTIVITIES,
-          );
-          console.log('Sent initial activity request.');
-          return;
+            console.log('Account information fetched.');
+            saveFile(
+              JSON.stringify(accountInformation, null, 2),
+              ACCOUNT_INFORMATION_FILE_NAME,
+              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
+            );
+            TradeRepublicAPI.getInstance().sendSubscriptionMessage(
+              SUBSCRIPTION_TYPES.ACTIVITIES,
+            );
+            console.log('Sent initial activity request.');
+            return;
+          } catch (error) {
+            console.error('Error processing cash message:', message);
+            reject(error);
+          }
         }
 
         if (subscription?.type === SUBSCRIPTION_TYPES.ACTIVITIES) {
