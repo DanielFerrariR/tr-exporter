@@ -123,10 +123,8 @@ const showMenu = async (): Promise<void> => {
           if (!transactions) continue;
 
           console.log('Converting transactions to portfolio data...');
-          const portfolioData = await mapTransactionsToPortfolioData(
-            transactions,
-            false,
-          );
+          const portfolioData =
+            await mapTransactionsToPortfolioData(transactions);
 
           saveFile(
             JSON.stringify(portfolioData, null, 2),
