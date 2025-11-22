@@ -30,11 +30,12 @@ export const mapTransactionsToPortfolioData = async (
       continue;
     }
 
-    // Skip non-portfolio transactions (transfers, card payments, status indicators)
+    // Skip non-portfolio transactions (transfers, card payments, status indicators, sent stock gifts)
     if (
       transaction.eventType === TRANSACTION_EVENT_TYPE.TRANSFER ||
       transaction.eventType === TRANSACTION_EVENT_TYPE.CARD_PAYMENT ||
-      transaction.eventType === TRANSACTION_EVENT_TYPE.STATUS_INDICATOR
+      transaction.eventType === TRANSACTION_EVENT_TYPE.STATUS_INDICATOR ||
+      transaction.eventType === TRANSACTION_EVENT_TYPE.SENT_GIFT
     ) {
       continue;
     }
