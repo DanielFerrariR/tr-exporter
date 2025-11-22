@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { createHash } from 'crypto';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { SIGN_TO_CURRENCY_MAP, TRANSACTION_EVENT_TYPE } from '../constants';
 import {
   PortfolioData,
@@ -12,14 +15,47 @@ import { parseTransactionDividendPdf } from './parseTransactionDividendPdf';
 import { identifyBuyOrSell } from './identifyBuyOrSell';
 import { parseToBigNumber } from './parseToBigNumber';
 
+const DIVIDEND_PDFS_DIR = join(process.cwd(), 'build', 'dividendPdfs');
+
+/**
+ * Generates a filename for a PDF based on the document URL
+ */
+const getPdfFilename = (
+  documentUrl: string,
+  date: string,
+  isin: string,
+): string => {
+  const urlHash = createHash('md5')
+    .update(documentUrl)
+    .digest('hex')
+    .slice(0, 8);
+  return `${date}_${isin}_${urlHash}.pdf`;
+};
+
+/**
+ * Cleans up the dividendPdfs directory by removing all existing PDFs
+ */
+const cleanupDividendPdfs = (): void => {
+  if (existsSync(DIVIDEND_PDFS_DIR)) {
+    rmSync(DIVIDEND_PDFS_DIR, { recursive: true, force: true });
+  }
+  mkdirSync(DIVIDEND_PDFS_DIR, { recursive: true });
+};
+
 export const mapTransactionsToPortfolioData = async (
   transactions: Transaction[],
+  shouldCleanDividendPdfs: boolean = false,
 ): Promise<PortfolioData> => {
   if (!transactions?.length) {
     console.warn(
       'No data provided to convert to PortfolioData. No file will be created.',
     );
     return [];
+  }
+
+  // Clean up dividendPdfs folder before processing (only if explicitly requested)
+  if (shouldCleanDividendPdfs) {
+    cleanupDividendPdfs();
   }
 
   const portfolioData: PortfolioData = [];
@@ -66,12 +102,34 @@ export const mapTransactionsToPortfolioData = async (
         if ('title' in section && section.title === 'Documents') {
           const documentSection = section as TransactionDocumentsSection;
           const documentUrl = documentSection.data[0]?.action?.payload;
-          const response = await axios.get(documentUrl, {
-            responseType: 'arraybuffer',
-          });
-          const parsedPdf = await parseTransactionDividendPdf(
-            Buffer.from(response.data),
-          );
+
+          if (!documentUrl) {
+            console.warn(
+              `No document URL found for dividend transaction: ${title}`,
+            );
+            continue;
+          }
+
+          // Generate filename for the PDF
+          const pdfFilename = getPdfFilename(documentUrl, date, isin);
+          const pdfPath = join(DIVIDEND_PDFS_DIR, pdfFilename);
+
+          let pdfBuffer: Buffer;
+
+          // Check if PDF already exists
+          if (existsSync(pdfPath)) {
+            pdfBuffer = readFileSync(pdfPath);
+          } else {
+            const response = await axios.get(documentUrl, {
+              responseType: 'arraybuffer',
+            });
+            pdfBuffer = Buffer.from(response.data);
+
+            // Save PDF to disk
+            writeFileSync(pdfPath, pdfBuffer);
+          }
+
+          const parsedPdf = await parseTransactionDividendPdf(pdfBuffer);
           dividendTotal = parsedPdf.dividendTotal;
           dividendPerShare = parsedPdf.dividendPerShare;
           shares = parsedPdf.shares;
