@@ -44,7 +44,10 @@ export async function login(): Promise<boolean> {
         `An unexpected error occurred during initial login: ${error.message}`,
       );
     } else {
-      console.error('An unexpected error occurred during initial login:', error);
+      console.error(
+        'An unexpected error occurred during initial login:',
+        error,
+      );
     }
     return false;
   }
