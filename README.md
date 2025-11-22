@@ -26,7 +26,7 @@ Currently supported transactions:
     - Transactions: {"type": "timelineTransactions", after: '...' } // list of transactions with optional 'after' option to get the next list of transactions (after needs the hash from the previous call)
     - Transaction Details: {"type": "timelineDetailV2", "id": timeline_id } // extra details of a transactions with required timeline_id that is id of a transaction
     - Activity Log: {"type": "timelineActivityLog", after: '...' } // list of activies with optional 'after' option to get the next list of activities (after needs the hash from the previous call)
-    - Cash: {"type": "cash" } // Cash balance
+    - Cash: {"type": "cash" } // Account Information - Account Id, Currency and Cash Balance
     - Can get more of options from https://github.com/pytr-org/pytr/blob/master/pytr/api.py code, but this project isn't supporting and explaining how to use the others for now
 
 ## Steps
