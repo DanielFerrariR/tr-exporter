@@ -4,6 +4,7 @@ import { Transaction } from '../types';
 export const identifyTransactionEventType = (
   transaction: Transaction,
 ): TRANSACTION_EVENT_TYPE | null => {
+  // Portfolio-related activities
   // Dividends
   if (
     transaction.subtitle === 'Cash dividend' ||
@@ -67,6 +68,11 @@ export const identifyTransactionEventType = (
     transaction.subtitle === 'Redeemed'
   ) {
     return TRANSACTION_EVENT_TYPE.STOCK_PERK;
+  }
+
+  // Non-portfolio-related transactions
+  if (transaction.subtitle === 'Saving executed ·') {
+    return TRANSACTION_EVENT_TYPE.SAVINGS_PLAN_FOR_CHILDREN;
   }
 
   // Transfers: subtitle is "Completed" or "Sent"

@@ -14,4 +14,5 @@ export enum TRANSACTION_EVENT_TYPE {
   TRANSFER = 'Transfer', // Money transfers between accounts
   CARD_PAYMENT = 'Card Payment', // Merchant card payments
   STATUS_INDICATOR = 'Status Indicator', // Declined, cancelled, or verification transactions
+  SAVINGS_PLAN_FOR_CHILDREN = 'Savings Plan for Children', // Savings plan for children
 }
