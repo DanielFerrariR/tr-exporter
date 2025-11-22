@@ -5,19 +5,14 @@ import {
   TransactionResponse,
   Activity,
   ActivityResponse,
-  TransactionTableSection,
   PortfolioData,
 } from '../types';
 import { TradeRepublicAPI } from '../api';
-import {
-  ACTIVITY_EVENT_TYPE,
-  RECEIVED_COMMAND_TYPES,
-  SUBSCRIPTION_TYPES,
-  TRANSACTION_EVENT_TYPE,
-} from '../constants';
+import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '../constants';
 import { identifyTransactionEventType } from './identifyEventType';
 import { mapTransactionsToPortfolioData } from './mapTransactionsToPortfolioData';
 import { identifyActivityEventType } from './identifyActivityType';
+import { getGiftTransactions } from './getGiftTransactions';
 
 const OUTPUT_DIRECTORY = 'build';
 const TRANSACTIONS_FILE_NAME = 'transactions.json';
@@ -78,6 +73,12 @@ export const getTransactions = async (): Promise<{
               return;
             }
 
+            // Identify activity event types
+            activities = activities.map((activity) => ({
+              ...activity,
+              eventType: identifyActivityEventType(activity) ?? undefined,
+            }));
+
             console.log('All activities fetched.');
             saveFile(
               JSON.stringify(activities, null, 2),
@@ -108,58 +109,21 @@ export const getTransactions = async (): Promise<{
               return;
             }
 
+            // Identify transaction event types
             transactions = transactions.map((transaction) => ({
               ...transaction,
               eventType: identifyTransactionEventType(transaction) ?? undefined,
             }));
 
-            // Adding fake received gift transactions from activities as transactions list doesn't include received gifts
-            const giftTransactions: Transaction[] = activities
-              .map((activity) => ({
-                ...activity,
-                eventType: identifyActivityEventType(activity) ?? undefined,
-              }))
-              .filter(
-                (activity) =>
-                  !!activity.eventType &&
-                  [
-                    ACTIVITY_EVENT_TYPE.RECEIVED_GIFT,
-                    ACTIVITY_EVENT_TYPE.STOCK_PERK,
-                  ].includes(activity.eventType),
-              )
-              .map((activity) => ({
-                id: activity.id,
-                timestamp: activity.timestamp,
-                title: activity.title,
-                icon: activity.icon,
-                badge: null,
-                subtitle: activity.subtitle,
-                amount: {
-                  currency: 'EUR',
-                  value: 0, // Will be added later in the transaction details
-                  fractionDigits: 2,
-                },
-                subAmount: null,
-                status: 'EXECUTED',
-                action: {
-                  type: 'timelineDetail',
-                  payload: activity.id,
-                },
-                eventType:
-                  activity.eventType === ACTIVITY_EVENT_TYPE.RECEIVED_GIFT
-                    ? TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
-                    : TRANSACTION_EVENT_TYPE.STOCK_PERK,
-                cashAccountNumber: null,
-                hidden: false,
-                deleted: false,
-              }));
+            // Adding received gift transactions from activities as transactions list doesn't include received gifts
+            const giftTransactions: Transaction[] =
+              getGiftTransactions(activities);
             transactions.push(...giftTransactions);
             transactions.sort(
               (transactionA, transactionB) =>
                 new Date(transactionB.timestamp).getTime() -
                 new Date(transactionA.timestamp).getTime(),
             );
-            //
 
             console.log('All transactions fetched.');
             console.log('Starting to fetch details for each transaction.');
@@ -198,24 +162,6 @@ export const getTransactions = async (): Promise<{
             }
 
             const transaction = transactions[transactionIndex];
-
-            // Adding gift amount to the transaction if it's a received gift
-            if (
-              transaction.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
-            ) {
-              transaction.sections?.forEach((section) => {
-                if ('title' in section && section.title === 'Transaction') {
-                  const tableSection = section as TransactionTableSection;
-                  const totalSubSection = tableSection.data.find(
-                    (subSection) => subSection.title === 'Total',
-                  );
-                  transaction.amount.value = Number(
-                    totalSubSection?.detail?.text?.slice(1) ?? 0,
-                  );
-                }
-              });
-            }
-            //
 
             transaction.sections = transactionDetailsResponse.sections;
             transactionsToFetchDetailsFor.delete(subscription.id);
