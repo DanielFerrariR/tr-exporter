@@ -4,7 +4,7 @@
   "description": "Node API to communicate with Trade Republic",
   "scripts": {
     "prepare": "husky",
-    "start": "ts-node src/index.ts",
+    "start": "tsx src/index.ts",
     "format": "prettier --write .",
     "check": "prettier --check .",
     "lint": "eslint . --ext .js,.ts",
@@ -18,7 +18,7 @@
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "jiti": "^2.6.1",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript-eslint": "^8.47.0"
   },
   "dependencies": {
