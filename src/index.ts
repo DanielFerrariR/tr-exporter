@@ -121,9 +121,9 @@ const showMenu = async (): Promise<void> => {
 
           await exporter.convert(portfolioData);
           console.log(`Conversion to ${exporter.name} completed successfully.`);
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Handle Ctrl+C (SIGINT) gracefully
-          if (error.name === 'ExitPromptError') {
+          if (error instanceof Error && error.name === 'ExitPromptError') {
             console.log('\n\nGracefully shutting down...');
             process.exit(0);
           }
@@ -145,9 +145,9 @@ const showMenu = async (): Promise<void> => {
           console.error('Error in interactive socket connection:', error);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle Ctrl+C (SIGINT) gracefully
-      if (error.name === 'ExitPromptError') {
+      if (error instanceof Error && error.name === 'ExitPromptError') {
         console.log('\n\nGracefully shutting down...');
         process.exit(0);
       }

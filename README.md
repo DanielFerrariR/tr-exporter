@@ -32,9 +32,11 @@ Currently supported transactions:
 
 1 - Install Node 20.19.0 (use the exact version to avoid errors)
 
-2 - npm install
+2 - Install pnpm (if not already installed): `npm install -g pnpm`
 
-3 - npm start
+3 - pnpm install
+
+4 - pnpm start
 
 ## Tip
 

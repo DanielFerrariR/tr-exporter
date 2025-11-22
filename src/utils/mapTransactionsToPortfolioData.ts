@@ -22,7 +22,7 @@ export const mapTransactionsToPortfolioData = async (
     return [];
   }
 
-  let portfolioData: PortfolioData = [];
+  const portfolioData: PortfolioData = [];
 
   for (const transaction of transactions) {
     if (transaction.status === 'CANCELED') continue;
@@ -31,11 +31,11 @@ export const mapTransactionsToPortfolioData = async (
 
     // Dividends
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
-      let title = transaction.title;
-      let eventType = transaction.eventType;
-      let date = transaction.timestamp.slice(0, 10);
-      let isin = transaction.icon.split('/')[1];
-      let exchange = 'LS-X';
+      const title = transaction.title;
+      const eventType = transaction.eventType;
+      const date = transaction.timestamp.slice(0, 10);
+      const isin = transaction.icon.split('/')[1];
+      const exchange = 'LS-X';
       let dividendTotal = '';
       let dividendPerShare = '';
       let shares = '';
@@ -81,17 +81,17 @@ export const mapTransactionsToPortfolioData = async (
 
     // Received Stock gifts when opening an account
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK) {
-      let eventType = transaction.eventType;
-      let type = identifyBuyOrSell(transaction);
-      let date = transaction.timestamp.slice(0, 10);
-      let title = transaction.title;
-      let exchange = 'LS-X';
+      const eventType = transaction.eventType;
+      const type = identifyBuyOrSell(transaction);
+      const date = transaction.timestamp.slice(0, 10);
+      const title = transaction.title;
+      const exchange = 'LS-X';
       let isin = '';
       let price = '';
       let quantity = '';
       let currency = '';
-      let feeTax = '';
-      let feeCurrency = '';
+      const feeTax = '';
+      const feeCurrency = '';
 
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.type === 'header') {
@@ -112,8 +112,10 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          currency =
-            SIGN_TO_CURRENCY_MAP[sharePriceSubSection?.detail?.text?.[0]!];
+          const currencySign = sharePriceSubSection?.detail?.text?.[0];
+          currency = currencySign
+            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
+            : '';
         }
       });
 
@@ -136,17 +138,17 @@ export const mapTransactionsToPortfolioData = async (
 
     // Received stock gifts from a friend
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIFT) {
-      let eventType = transaction.eventType;
-      let type = identifyBuyOrSell(transaction);
-      let date = transaction.timestamp.slice(0, 10);
-      let title = transaction.title;
-      let exchange = 'LS-X';
+      const eventType = transaction.eventType;
+      const type = identifyBuyOrSell(transaction);
+      const date = transaction.timestamp.slice(0, 10);
+      const title = transaction.title;
+      const exchange = 'LS-X';
       let isin = '';
       let price = '';
       let quantity = '';
       let currency = '';
-      let feeTax = '';
-      let feeCurrency = '';
+      const feeTax = '';
+      const feeCurrency = '';
 
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.type === 'header') {
@@ -167,8 +169,10 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          currency =
-            SIGN_TO_CURRENCY_MAP[sharePriceSubSection?.detail?.text?.[0]!];
+          const currencySign = sharePriceSubSection?.detail?.text?.[0];
+          currency = currencySign
+            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
+            : '';
         }
       });
 
@@ -196,12 +200,12 @@ export const mapTransactionsToPortfolioData = async (
       transaction.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
       transaction.eventType === TRANSACTION_EVENT_TYPE.CASHBACK
     ) {
-      let eventType = transaction.eventType;
-      let type = identifyBuyOrSell(transaction);
-      let date = transaction.timestamp.slice(0, 10);
-      let isin = transaction.icon.split('/')[1];
-      let exchange = 'LS-X';
-      let title = transaction.title;
+      const eventType = transaction.eventType;
+      const type = identifyBuyOrSell(transaction);
+      const date = transaction.timestamp.slice(0, 10);
+      const isin = transaction.icon.split('/')[1];
+      const exchange = 'LS-X';
+      const title = transaction.title;
       let price = '';
       let quantity = '';
       let currency = '';
@@ -228,16 +232,19 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          currency =
-            SIGN_TO_CURRENCY_MAP[sharePriceSubSection?.detail?.text?.[0]!];
+          const currencySign = sharePriceSubSection?.detail?.text?.[0];
+          currency = currencySign
+            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
+            : '';
 
           const feeText = feeSubSection?.detail?.text;
           feeTax =
             feeText === 'Free' || !feeText ? '' : (feeText?.slice(1) ?? '');
+          const feeCurrencySign = feeText?.[0];
           feeCurrency =
-            feeText === 'Free' || !feeText || !feeTax
+            feeText === 'Free' || !feeText || !feeTax || !feeCurrencySign
               ? ''
-              : (SIGN_TO_CURRENCY_MAP[feeText?.[0]!] ?? '');
+              : (SIGN_TO_CURRENCY_MAP[feeCurrencySign] ?? '');
         }
 
         // Check for "Overview" section with Transaction subsection (older format)
@@ -262,20 +269,22 @@ export const mapTransactionsToPortfolioData = async (
                 -3,
               ) ?? '0',
             ).toFixed();
-            currency =
-              SIGN_TO_CURRENCY_MAP[
-                transactionSubSection?.detail?.displayValue?.text?.[0]!
-              ];
+            const currencySign =
+              transactionSubSection?.detail?.displayValue?.text?.[0];
+            currency = currencySign
+              ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
+              : '';
           }
 
           if (feeSubSection && !feeTax) {
             const feeText = feeSubSection?.detail?.text;
             feeTax =
               feeText === 'Free' || !feeText ? '' : (feeText?.slice(1) ?? '');
+            const feeCurrencySign = feeText?.[0];
             feeCurrency =
-              feeText === 'Free' || !feeText || !feeTax
+              feeText === 'Free' || !feeText || !feeTax || !feeCurrencySign
                 ? ''
-                : (SIGN_TO_CURRENCY_MAP[feeText?.[0]!] ?? '');
+                : (SIGN_TO_CURRENCY_MAP[feeCurrencySign] ?? '');
           }
         }
       });
@@ -300,12 +309,13 @@ export const mapTransactionsToPortfolioData = async (
 
     // Interest
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.INTEREST) {
-      let eventType = transaction.eventType;
-      let type = TRANSACTION_TYPE.CASH_GAIN;
-      let date = transaction.timestamp.slice(0, 10);
-      let title = transaction.title;
-      let currency = transaction.amount.currency;
-      let amount = parseToBigNumber(
+      const eventType = transaction.eventType;
+      const type: TRANSACTION_TYPE.CASH_GAIN | TRANSACTION_TYPE.CASH_EXPENSE =
+        TRANSACTION_TYPE.CASH_GAIN;
+      const date = transaction.timestamp.slice(0, 10);
+      const title = transaction.title;
+      const currency = transaction.amount.currency;
+      const amount = parseToBigNumber(
         transaction.amount.value.toString(),
       ).toFixed();
       let feeTax = '';
@@ -322,7 +332,11 @@ export const mapTransactionsToPortfolioData = async (
           const taxValue = taxSubSection?.detail?.text;
           feeTax = taxValue?.slice(1) ?? '';
           if (feeTax === '0.00') feeTax = '';
-          feeCurrency = feeTax ? SIGN_TO_CURRENCY_MAP[taxValue?.[0]!] : '';
+          const taxCurrencySign = taxValue?.[0];
+          feeCurrency =
+            feeTax && taxCurrencySign
+              ? (SIGN_TO_CURRENCY_MAP[taxCurrencySign] ?? '')
+              : '';
         }
       });
 
@@ -343,20 +357,19 @@ export const mapTransactionsToPortfolioData = async (
 
     // tax corrections
     if (transaction.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION) {
-      let eventType = transaction.eventType;
-      let type = parseToBigNumber(
-        transaction.amount.value.toString(),
-      ).isGreaterThan(0)
-        ? TRANSACTION_TYPE.CASH_GAIN
-        : TRANSACTION_TYPE.CASH_EXPENSE;
-      let date = transaction.timestamp.slice(0, 10);
-      let title = transaction.title;
-      let amount = parseToBigNumber(
+      const eventType = transaction.eventType;
+      const type: TRANSACTION_TYPE.CASH_GAIN | TRANSACTION_TYPE.CASH_EXPENSE =
+        parseToBigNumber(transaction.amount.value.toString()).isGreaterThan(0)
+          ? TRANSACTION_TYPE.CASH_GAIN
+          : TRANSACTION_TYPE.CASH_EXPENSE;
+      const date = transaction.timestamp.slice(0, 10);
+      const title = transaction.title;
+      const amount = parseToBigNumber(
         Math.abs(transaction.amount.value).toString(),
       ).toFixed();
-      let currency = transaction.amount.currency;
-      let feeTax = '';
-      let feeCurrency = '';
+      const currency = transaction.amount.currency;
+      const feeTax = '';
+      const feeCurrency = '';
 
       const newTransaction = {
         title,

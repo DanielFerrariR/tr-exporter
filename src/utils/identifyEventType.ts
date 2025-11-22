@@ -1,5 +1,5 @@
-import { ACTIVITY_EVENT_TYPE, TRANSACTION_EVENT_TYPE } from '../constants';
-import { Activity, Transaction } from '../types';
+import { TRANSACTION_EVENT_TYPE } from '../constants';
+import { Transaction } from '../types';
 
 export const identifyTransactionEventType = (
   transaction: Transaction,

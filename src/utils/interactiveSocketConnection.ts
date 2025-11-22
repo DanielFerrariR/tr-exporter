@@ -90,7 +90,7 @@ export const interactiveSocketConnection = (): Promise<void> => {
           return;
         }
 
-        let messageToSend = line;
+        const messageToSend = line;
 
         // Handle special case for 'exit' command
         if (messageToSend.toLowerCase() === 'exit') {

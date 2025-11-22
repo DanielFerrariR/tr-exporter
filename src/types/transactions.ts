@@ -2,8 +2,8 @@ import { TRANSACTION_EVENT_TYPE } from '../constants';
 
 export interface TransactionAction {
   type: string;
-  payload: any;
-  overrideAction?: any;
+  payload: string;
+  overrideAction?: unknown;
 }
 
 export interface TransactionDetail {
@@ -83,7 +83,7 @@ export interface TransactionStep {
     title: string;
     subtitle: string | null;
     timestamp: string;
-    cta: any;
+    cta: unknown;
   };
 }
 
@@ -149,10 +149,10 @@ export interface Transaction {
   timestamp: string;
   title: string;
   icon: string;
-  badge: any;
+  badge: unknown;
   subtitle: string | null;
   amount: TransactionAmount;
-  subAmount: any;
+  subAmount: unknown;
   status: 'EXECUTED' | 'CANCELED';
   action: TransactionAction;
   eventType?: TRANSACTION_EVENT_TYPE; // Made optional since it's no longer in the API response

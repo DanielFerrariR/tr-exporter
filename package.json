@@ -36,8 +36,10 @@
     "ws": "^8.18.2"
   },
   "lint-staged": {
-    "*.{js,ts}": [
-      "eslint --fix",
+    "*.{js,ts,mts,cts}": [
+      "eslint --fix"
+    ],
+    "*.{js,ts,mts,cts,json,md,yaml,yml,css,scss,html}": [
       "prettier --write"
     ]
   }

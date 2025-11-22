@@ -32,7 +32,7 @@ export const getTransactions = async (): Promise<{
   new Promise((resolve, reject) => {
     let activities: Activity[] = [];
     let transactions: Transaction[] = [];
-    let transactionsToFetchDetailsFor = new Set<string>();
+    const transactionsToFetchDetailsFor = new Set<string>();
 
     TradeRepublicAPI.getInstance().connect({
       onOpen: () => {

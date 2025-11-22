@@ -30,7 +30,7 @@ export const convertTransactionsToSnowballCsv = async (
     return;
   }
 
-  let csvRows: string[] = [];
+  const csvRows: string[] = [];
   csvRows.push(HEADERS.join(','));
 
   console.log('Converting transactions to Snowball CSV format...');
@@ -45,7 +45,7 @@ export const convertTransactionsToSnowballCsv = async (
     let feeTax = '';
     let exchange = '';
     let feeCurrency = '';
-    let doNotAdjustCash = '';
+    const doNotAdjustCash = '';
     let note = '';
 
     // Dividends

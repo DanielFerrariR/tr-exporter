@@ -128,7 +128,7 @@ export class TradeRepublicAPI {
 
     // To always include the token if the message has a format like: {"type":"availableCash"}
     try {
-      let jsonMatch = parsedMessage.match(/\{.*\}/s);
+      const jsonMatch = parsedMessage.match(/\{.*\}/s);
       if (!jsonMatch) throw new Error('No JSON payload found in message');
       const jsonPayload = JSON.parse(jsonMatch![0]);
       jsonPayload.token = this._sessionToken;
@@ -172,7 +172,7 @@ export class TradeRepublicAPI {
       let jsonPayload: object | undefined;
 
       const [subscriptionId, command] = message.split(' ', 2);
-      let jsonMatch = message.match(/\{.*\}/s);
+      const jsonMatch = message.match(/\{.*\}/s);
 
       try {
         // jsonMatch might be undefined if command is keep-alive
