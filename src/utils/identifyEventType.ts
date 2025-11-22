@@ -71,7 +71,7 @@ export const identifyTransactionEventType = (
   }
 
   // Non-portfolio-related transactions
-  if (transaction.subtitle === 'Saving executed ·') {
+  if (transaction.subtitle?.includes('Saving executed ·')) {
     return TRANSACTION_EVENT_TYPE.SAVINGS_PLAN_FOR_CHILDREN;
   }
 
