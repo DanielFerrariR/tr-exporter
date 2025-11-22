@@ -130,7 +130,7 @@ export class TradeRepublicAPI {
     try {
       const jsonMatch = parsedMessage.match(/\{.*\}/s);
       if (!jsonMatch) throw new Error('No JSON payload found in message');
-      const jsonPayload = JSON.parse(jsonMatch![0]);
+      const jsonPayload = JSON.parse(jsonMatch[0]);
       jsonPayload.token = this._sessionToken;
       parsedMessage = `sub ${this._subscriptionId} ${JSON.stringify(jsonPayload)}`;
       this._subscriptions[this._subscriptionId] = jsonPayload;
@@ -157,7 +157,9 @@ export class TradeRepublicAPI {
     this._webSocket = new WebSocket(TRADE_REPUBLIC_WEBSOCKET_URL);
 
     this._webSocket.onopen = async () => {
-      this._webSocket!.send(CONNECTION_MESSAGE);
+      if (this._webSocket) {
+        this._webSocket.send(CONNECTION_MESSAGE);
+      }
       onOpen?.();
     };
 
@@ -213,9 +215,10 @@ export class TradeRepublicAPI {
       return;
     }
 
+    const webSocket = this._webSocket;
     let status = CONNECTION_STATUS.UNKNOWN;
     Object.values(CONNECTION_STATUS).forEach((value) => {
-      if (this._webSocket!.readyState === value) {
+      if (webSocket.readyState === value) {
         status = value;
       }
     });
