@@ -1,7 +1,7 @@
 import {
-  Transaction,
   TransactionDataObject,
   TransactionHeaderSection,
+  TransactionSection,
   TransactionTableSection,
 } from '../../types';
 
@@ -30,7 +30,7 @@ export const findSubsection = (
 };
 
 export const findTableSection = (
-  sections: Transaction['sections'],
+  sections: TransactionSection[] | undefined,
   sectionTitle: string,
 ): TransactionTableSection | undefined => {
   return sections?.find(
@@ -42,7 +42,7 @@ export const findTableSection = (
 };
 
 export const findHeaderSection = (
-  sections: Transaction['sections'],
+  sections: TransactionSection[] | undefined,
 ): TransactionHeaderSection | undefined => {
   return sections?.find(
     (section): section is TransactionHeaderSection =>
@@ -51,7 +51,7 @@ export const findHeaderSection = (
 };
 
 export const extractIsinFromHeader = (
-  sections: Transaction['sections'],
+  sections: TransactionSection[] | undefined,
 ): string => {
   const headerSection = findHeaderSection(sections);
   if (!headerSection?.data?.icon) {
