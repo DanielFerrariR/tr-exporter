@@ -7,7 +7,6 @@ import {
   TransactionHeaderSection,
   TransactionTableSection,
 } from '../types';
-import { calculateStringNumbers } from './calculateStringNumbers';
 import { identifyBuyOrSell } from './identifyBuyOrSell';
 import { parseToBigNumber } from './parseToBigNumber';
 
@@ -47,7 +46,7 @@ export const mapTransactionsToPortfolioData = async (
       // Currently all transactions are in EUR
       const currency = 'EUR';
       const feeCurrency = 'EUR';
-      let dividendTotal = '';
+      const dividendTotal = '';
       let dividendPerShare = '';
       let shares = '';
       let feeTax = '';
@@ -72,14 +71,13 @@ export const mapTransactionsToPortfolioData = async (
                   '0'),
           ).toFixed();
           // The total doesn't include tax, so we need to add it
-          dividendTotal = parseToBigNumber(
-            calculateStringNumbers('add', [
-              totalSubSection?.detail?.displayValue?.text?.slice(1) ??
-                totalSubSection?.detail?.text?.slice(3) ??
-                '0',
-              feeTax,
-            ]),
-          ).toFixed();
+          const dividendTotal = parseToBigNumber(
+            totalSubSection?.detail?.displayValue?.text?.slice(1) ??
+              totalSubSection?.detail?.text?.slice(3) ??
+              '0',
+          )
+            .plus(parseToBigNumber(feeTax))
+            .toFixed();
           shares = parseToBigNumber(
             sharesSubSection?.detail?.displayValue?.text ??
               sharesSubSection?.detail?.text ??
@@ -87,9 +85,9 @@ export const mapTransactionsToPortfolioData = async (
           ).toFixed();
           // As the Dividend Per Share can be in another currency,
           // we need to calculate it with the total / shares
-          dividendPerShare = parseToBigNumber(
-            calculateStringNumbers('divide', [dividendTotal, shares]) ?? '0',
-          ).toFixed();
+          dividendPerShare = parseToBigNumber(dividendTotal)
+            .dividedBy(parseToBigNumber(shares))
+            .toFixed();
         }
       });
 
@@ -278,7 +276,9 @@ export const mapTransactionsToPortfolioData = async (
             feeText === 'Free'
               ? '0'
               : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
-          feeTax = calculateStringNumbers('add', [feeTax, taxValue]);
+          feeTax = parseToBigNumber(feeTax)
+            .plus(parseToBigNumber(taxValue))
+            .toFixed();
           break;
         }
         // Check for "Overview" section with Transaction subsection, only if transactions section doesn't exist
@@ -309,7 +309,9 @@ export const mapTransactionsToPortfolioData = async (
             feeText === 'Free'
               ? '0'
               : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
-          feeTax = calculateStringNumbers('add', [feeTax, taxValue]);
+          feeTax = parseToBigNumber(feeTax)
+            .plus(parseToBigNumber(taxValue))
+            .toFixed();
         }
       }
 

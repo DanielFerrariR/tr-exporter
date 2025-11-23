@@ -6,4 +6,3 @@ export * from './login';
 export * from './mapTransactionsToPortfolioData';
 export * from './parseToBigNumber';
 export * from './saveFile';
-export * from './calculateStringNumbers';
