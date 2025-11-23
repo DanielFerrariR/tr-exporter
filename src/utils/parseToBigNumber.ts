@@ -1,10 +1,17 @@
 import BigNumber from 'bignumber.js';
 
 export const parseToBigNumber = (value: string | undefined): BigNumber => {
-  // Extract numeric values in format 0,00 or 0.00 or 0 (absolute value only)
-  const numericMatch = value?.match(/\d+([.,]\d+)?/);
-  const sanitizedValue = numericMatch
-    ? numericMatch[0].replace(/,/g, '.')
-    : '0';
+  if (!value) return new BigNumber(0);
+
+  // Extract all digits, commas, and dots
+  const numericMatch = value.match(/[\d.,]+/);
+
+  if (!numericMatch) {
+    return new BigNumber(0);
+  }
+
+  // Remove all commas (thousands separators) and keep dots (decimal separators)
+  const sanitizedValue = numericMatch[0].replace(/,/g, '');
+
   return new BigNumber(sanitizedValue);
 };
