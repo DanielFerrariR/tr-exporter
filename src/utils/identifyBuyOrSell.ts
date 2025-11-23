@@ -16,5 +16,6 @@ export const identifyBuyOrSell = (
   ) {
     return TRANSACTION_TYPE.BUY;
   }
+  // Sell and Limit Sell
   return TRANSACTION_TYPE.SELL;
 };
