@@ -7,8 +7,6 @@ import {
   Transaction,
   TRANSACTION_TYPE,
 } from '../../types';
-import { identifyBuyOrSell } from '../identifyBuyOrSell';
-import { parseToBigNumber } from '../parseToBigNumber';
 import {
   DEFAULT_CURRENCY,
   DEFAULT_EXCHANGE,
@@ -29,6 +27,8 @@ import {
   findSubsection,
   findTableSection,
   getDetailText,
+  identifyBuyOrSell,
+  parseToBigNumber,
 } from './helpers';
 
 export const handleDividend = (

@@ -6,7 +6,6 @@ import {
   OrderTransaction,
   PortfolioData,
 } from '../../types';
-import { getExchangeFromIsin } from '../../utils/getExchangeFromIsin';
 import {
   DEFAULT_PRICE_FOR_CASH,
   EMPTY_STRING,
@@ -14,7 +13,7 @@ import {
   EVENT_TYPE_CASH_GAIN,
   EVENT_TYPE_DIVIDEND,
 } from './constants';
-import { CsvRowData } from './helpers';
+import { CsvRowData, getExchangeFromIsin } from './helpers';
 
 export const handleDividend = async (
   item: DividendTransaction,
@@ -94,7 +93,7 @@ export const convertItemToCsvRow = async (
       item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
       item.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
       item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
-      item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY
+      item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT
     ) {
       return await handleOrderTransaction(item);
     }

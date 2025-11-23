@@ -1,4 +1,4 @@
-import { saveFile } from './saveFile';
+import { saveFile } from '../saveFile';
 import {
   Transaction,
   TransactionDetailsResponse,
@@ -7,19 +7,24 @@ import {
   ActivityResponse,
   PortfolioData,
   AccountInformation,
-} from '../types';
-import { TradeRepublicAPI } from '../api';
-import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '../constants';
-import { identifyTransactionEventType } from './identifyEventType';
-import { mapTransactionsToPortfolioData } from './mapTransactionsToPortfolioData';
-import { identifyActivityEventType } from './identifyActivityType';
-import { getGiftTransactions } from './getGiftTransactions';
-
-const OUTPUT_DIRECTORY = 'build';
-const TRANSACTIONS_FILE_NAME = 'transactions.json';
-const ACTIVITIES_FILE_NAME = 'activities.json';
-const ACCOUNT_INFORMATION_FILE_NAME = 'accountInformation.json';
-const PORTFOLIO_DATA_FILE_NAME = 'portfolioData.json';
+  SplitMessage,
+} from '../../types';
+import { TradeRepublicAPI } from '../../api';
+import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '../../constants';
+import {
+  identifyTransactionEventType,
+  identifyActivityEventType,
+  getGiftTransactions,
+} from './helpers';
+import { mapTransactionsToPortfolioData } from '../mapTransactionsToPortfolioData';
+import { CloseEvent, ErrorEvent } from 'ws';
+import {
+  ACCOUNT_INFORMATION_FILE_NAME,
+  OUTPUT_DIRECTORY,
+  ACTIVITIES_FILE_NAME,
+  TRANSACTIONS_FILE_NAME,
+  PORTFOLIO_DATA_FILE_NAME,
+} from './constants';
 
 export const getTransactions = async (): Promise<{
   transactions: Transaction[];
@@ -55,7 +60,10 @@ export const getTransactions = async (): Promise<{
           reject(error);
         }
       },
-      onMessage: async (message, { command, jsonPayload, subscription }) => {
+      onMessage: async (
+        message: string,
+        { command, jsonPayload, subscription }: SplitMessage,
+      ) => {
         // We don't want to see logs of keep-alive messages
         if (command === RECEIVED_COMMAND_TYPES.KEEP_ALIVE) return;
 
@@ -233,7 +241,7 @@ export const getTransactions = async (): Promise<{
           }
         }
       },
-      onClose: (event) => {
+      onClose: (event: CloseEvent) => {
         // Code 1000 is normal closure
         // Code 1001 is "going away"
         // Codes 1002-1015 are various error conditions
@@ -245,7 +253,7 @@ export const getTransactions = async (): Promise<{
           reject(new Error(errorMessage));
         }
       },
-      onError: (error) => {
+      onError: (error: ErrorEvent) => {
         console.error('WebSocket error:', error);
         reject(error);
       },
