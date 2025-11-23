@@ -46,7 +46,7 @@ export const mapTransactionsToPortfolioData = async (
       // Currently all transactions are in EUR
       const currency = 'EUR';
       const feeCurrency = 'EUR';
-      const dividendTotal = '';
+      let dividendTotal = '';
       let dividendPerShare = '';
       let shares = '';
       let feeTax = '';
@@ -64,30 +64,25 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Total',
           );
           feeTax = parseToBigNumber(
-            taxSubSection?.detail?.displayValue?.text[0] === '-'
-              ? taxSubSection?.detail?.displayValue?.text?.slice(2)
-              : (taxSubSection?.detail?.displayValue?.text?.slice(1) ??
-                  taxSubSection?.detail?.text?.slice(1) ??
-                  '0'),
+            taxSubSection?.detail?.displayValue?.text ??
+              taxSubSection?.detail?.text,
           ).toFixed();
           // The total doesn't include tax, so we need to add it
-          const dividendTotal = parseToBigNumber(
-            totalSubSection?.detail?.displayValue?.text?.slice(1) ??
-              totalSubSection?.detail?.text?.slice(3) ??
-              '0',
+          dividendTotal = parseToBigNumber(
+            totalSubSection?.detail?.displayValue?.text ??
+              totalSubSection?.detail?.text,
           )
             .plus(parseToBigNumber(feeTax))
             .toFixed();
           shares = parseToBigNumber(
             sharesSubSection?.detail?.displayValue?.text ??
-              sharesSubSection?.detail?.text ??
-              '0',
+              sharesSubSection?.detail?.text,
           ).toFixed();
           // As the Dividend Per Share can be in another currency,
           // we need to calculate it with the total / shares
           dividendPerShare = parseToBigNumber(dividendTotal)
             .dividedBy(parseToBigNumber(shares))
-            .toFixed();
+            .toFixed(2);
         }
       });
 
@@ -137,10 +132,12 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Share price',
           );
           quantity = parseToBigNumber(
-            sharesSubSection?.detail?.text ?? '0',
+            sharesSubSection?.detail?.displayValue?.text ??
+              sharesSubSection?.detail?.text,
           ).toFixed();
           price = parseToBigNumber(
-            sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
+            sharePriceSubSection?.detail?.displayValue?.text ??
+              sharePriceSubSection?.detail?.text,
           ).toFixed();
         }
       });
@@ -191,10 +188,12 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Share price',
           );
           quantity = parseToBigNumber(
-            sharesSubSection?.detail?.text ?? '0',
+            sharesSubSection?.detail?.displayValue?.text ??
+              sharesSubSection?.detail?.text,
           ).toFixed();
           price = parseToBigNumber(
-            sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
+            sharePriceSubSection?.detail?.displayValue?.text ??
+              sharePriceSubSection?.detail?.text,
           ).toFixed();
         }
       });
@@ -258,25 +257,27 @@ export const mapTransactionsToPortfolioData = async (
           );
 
           quantity = parseToBigNumber(
-            sharesSubSection?.detail?.text ?? '0',
+            sharesSubSection?.detail?.displayValue?.text ??
+              sharesSubSection?.detail?.text,
           ).toFixed();
           price = parseToBigNumber(
-            sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
+            sharePriceSubSection?.detail?.displayValue?.text ??
+              sharePriceSubSection?.detail?.text,
           ).toFixed();
-          let taxValue = taxSubSection?.detail?.text;
-          taxValue = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
 
           // Happens in sell orders, when the tax correction is a refund
           taxCorrectionAmount = parseToBigNumber(
-            taxCorrectionSubSection?.detail?.text?.slice(3) ?? '0',
+            taxCorrectionSubSection?.detail?.displayValue?.text ??
+              taxCorrectionSubSection?.detail?.text,
           ).toFixed();
 
-          const feeText = feeSubSection?.detail?.text;
-          feeTax =
-            feeText === 'Free'
-              ? '0'
-              : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
-          feeTax = parseToBigNumber(feeTax)
+          const taxValue =
+            taxSubSection?.detail?.displayValue?.text ??
+            taxSubSection?.detail?.text;
+          const feeText =
+            feeSubSection?.detail?.displayValue?.text ??
+            feeSubSection?.detail?.text;
+          feeTax = parseToBigNumber(feeText)
             .plus(parseToBigNumber(taxValue))
             .toFixed();
           break;
@@ -296,20 +297,19 @@ export const mapTransactionsToPortfolioData = async (
 
           // Only use this if we haven't already found data in Transaction section
           price = parseToBigNumber(
-            transactionSubSection?.detail?.displayValue?.text?.slice(1) ?? '0',
+            transactionSubSection?.detail?.displayValue?.text ??
+              transactionSubSection?.detail?.text,
           ).toFixed();
           quantity = parseToBigNumber(
-            transactionSubSection?.detail?.displayValue?.prefix?.slice(0, -3) ??
-              '0',
+            transactionSubSection?.detail?.displayValue?.prefix,
           ).toFixed();
-          let taxValue = taxSubSection?.detail?.text;
-          taxValue = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
-          const feeText = feeSubSection?.detail?.text;
-          feeTax =
-            feeText === 'Free'
-              ? '0'
-              : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
-          feeTax = parseToBigNumber(feeTax)
+          const taxValue =
+            taxSubSection?.detail?.displayValue?.text ??
+            taxSubSection?.detail?.text;
+          const feeText =
+            feeSubSection?.detail?.displayValue?.text ??
+            feeSubSection?.detail?.text;
+          feeTax = parseToBigNumber(feeText)
             .plus(parseToBigNumber(taxValue))
             .toFixed();
         }
@@ -372,13 +372,10 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Tax',
           );
 
-          // We need to cover both because some interest transactions have a formatted displayValue
-          // The ones that don't have a formatted displayValue have formatted text value
           const taxValue =
             taxSubSection?.detail?.displayValue?.text ??
             taxSubSection?.detail?.text;
-          feeTax = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
-          if (feeTax === '0.00') feeTax = '0';
+          feeTax = parseToBigNumber(taxValue).toFixed();
         }
       });
 
