@@ -1,4 +1,4 @@
-import { saveFile } from '../saveFile';
+import { saveFile } from '../../utils/saveFile';
 import {
   Transaction,
   TransactionDetailsResponse,
@@ -16,7 +16,7 @@ import {
   identifyActivityEventType,
   getGiftTransactions,
 } from './helpers';
-import { mapTransactionsToPortfolioData } from '../mapTransactionsToPortfolioData';
+import { mapTransactionsToPortfolioData } from '../../utils/mapTransactionsToPortfolioData';
 import { CloseEvent, ErrorEvent } from 'ws';
 import {
   ACCOUNT_INFORMATION_FILE_NAME,
@@ -26,7 +26,7 @@ import {
   PORTFOLIO_DATA_FILE_NAME,
 } from './constants';
 
-export const getTransactions = async (): Promise<{
+export const downloadTransactions = async (): Promise<{
   transactions: Transaction[];
   activities: Activity[];
   portfolioData: PortfolioData;

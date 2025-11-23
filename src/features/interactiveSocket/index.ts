@@ -2,7 +2,7 @@ import readline from 'readline';
 import { TradeRepublicAPI } from '../../api';
 import { CONNECTION_STATUS } from '../../constants';
 
-export const interactiveSocketConnection = (): Promise<void> => {
+export const interactiveSocket = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     const readlineInterface = readline.createInterface({
       input: process.stdin,
