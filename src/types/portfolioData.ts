@@ -44,7 +44,7 @@ interface DividendTransaction {
 }
 
 // Cash Gain and Cash Loss
-interface CashTransaction {
+export interface CashTransaction {
   title: string;
   eventType:
     | TRANSACTION_EVENT_TYPE.INTEREST

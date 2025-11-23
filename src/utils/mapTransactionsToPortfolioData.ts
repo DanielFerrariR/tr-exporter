@@ -1,23 +1,18 @@
-import { SIGN_TO_CURRENCY_MAP, TRANSACTION_EVENT_TYPE } from '../constants';
+import { TRANSACTION_EVENT_TYPE } from '../constants';
 import {
+  CashTransaction,
   PortfolioData,
   Transaction,
   TRANSACTION_TYPE,
-  TransactionDocumentsSection,
   TransactionHeaderSection,
   TransactionTableSection,
 } from '../types';
-import {
-  getDividendPdfData,
-  loadDividendPdfsData,
-  saveDividendPdfsData,
-} from './getDividendPdfData';
+import { calculateStringNumbers } from './calculateStringNumbers';
 import { identifyBuyOrSell } from './identifyBuyOrSell';
 import { parseToBigNumber } from './parseToBigNumber';
 
 export const mapTransactionsToPortfolioData = async (
   transactions: Transaction[],
-  accountNumber: string,
 ): Promise<PortfolioData> => {
   if (!transactions?.length) {
     console.warn(
@@ -26,25 +21,11 @@ export const mapTransactionsToPortfolioData = async (
     return [];
   }
 
-  // Load existing dividend PDFs data from JSON
-  const dividendPdfsData = loadDividendPdfsData(accountNumber);
-  let dividendPdfsDataUpdated = false;
-
   const portfolioData: PortfolioData = [];
 
   for (const transaction of transactions) {
     // Skip cancelled transactions - they shouldn't be included in portfolio data
     if (transaction.status === 'CANCELED') {
-      continue;
-    }
-
-    // Skip non-portfolio transactions (transfers, card payments, status indicators, sent stock gifts)
-    if (
-      transaction.eventType === TRANSACTION_EVENT_TYPE.TRANSFER ||
-      transaction.eventType === TRANSACTION_EVENT_TYPE.CARD_PAYMENT ||
-      transaction.eventType === TRANSACTION_EVENT_TYPE.STATUS_INDICATOR ||
-      transaction.eventType === TRANSACTION_EVENT_TYPE.SENT_GIFT
-    ) {
       continue;
     }
 
@@ -63,45 +44,54 @@ export const mapTransactionsToPortfolioData = async (
       const date = transaction.timestamp.slice(0, 10);
       const isin = transaction.icon.split('/')[1];
       const exchange = 'LS-X';
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
       let dividendTotal = '';
       let dividendPerShare = '';
       let shares = '';
-      let currency = '';
       let feeTax = '';
-      let feeCurrency = '';
 
-      for (const section of transaction.sections ?? []) {
-        if ('title' in section && section.title === 'Documents') {
-          const documentSection = section as TransactionDocumentsSection;
-          const documentUrl = documentSection.data[0]?.action?.payload;
-
-          if (!documentUrl) {
-            console.warn(
-              `No document URL found for dividend transaction: ${title}`,
-            );
-            continue;
-          }
-
-          // Get PDF data (from cache or by downloading and parsing)
-          const { data: parsedPdf, cacheUpdated } = await getDividendPdfData(
-            documentUrl,
-            date,
-            isin,
-            dividendPdfsData,
+      transaction.sections?.forEach((section) => {
+        if ('title' in section && section.title === 'Transaction') {
+          const tableSection = section as TransactionTableSection;
+          const sharesSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Shares',
           );
-
-          if (cacheUpdated) {
-            dividendPdfsDataUpdated = true;
-          }
-
-          dividendTotal = parsedPdf.dividendTotal;
-          dividendPerShare = parsedPdf.dividendPerShare;
-          shares = parsedPdf.shares;
-          currency = parsedPdf.currency;
-          feeTax = parsedPdf.taxAmount;
-          feeCurrency = parsedPdf.taxCurrency;
+          const taxSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Tax',
+          );
+          const totalSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Total',
+          );
+          feeTax = parseToBigNumber(
+            taxSubSection?.detail?.displayValue?.text[0] === '-'
+              ? taxSubSection?.detail?.displayValue?.text?.slice(2)
+              : (taxSubSection?.detail?.displayValue?.text?.slice(1) ??
+                  taxSubSection?.detail?.text?.slice(1) ??
+                  '0'),
+          ).toFixed();
+          // The total doesn't include tax, so we need to add it
+          dividendTotal = parseToBigNumber(
+            calculateStringNumbers('add', [
+              totalSubSection?.detail?.displayValue?.text?.slice(1) ??
+                totalSubSection?.detail?.text?.slice(3) ??
+                '0',
+              feeTax,
+            ]),
+          ).toFixed();
+          shares = parseToBigNumber(
+            sharesSubSection?.detail?.displayValue?.text ??
+              sharesSubSection?.detail?.text ??
+              '0',
+          ).toFixed();
+          // As the Dividend Per Share can be in another currency,
+          // we need to calculate it with the total / shares
+          dividendPerShare = parseToBigNumber(
+            calculateStringNumbers('divide', [dividendTotal, shares]) ?? '0',
+          ).toFixed();
         }
-      }
+      });
 
       portfolioData.push({
         title,
@@ -127,12 +117,13 @@ export const mapTransactionsToPortfolioData = async (
       const date = transaction.timestamp.slice(0, 10);
       const title = transaction.title;
       const exchange = 'LS-X';
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
       let isin = '';
       let price = '';
       let quantity = '';
-      let currency = '';
-      const feeTax = '';
-      const feeCurrency = '';
+      const feeTax = '0';
 
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.type === 'header') {
@@ -153,10 +144,6 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          const currencySign = sharePriceSubSection?.detail?.text?.[0];
-          currency = currencySign
-            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
-            : '';
         }
       });
 
@@ -184,12 +171,13 @@ export const mapTransactionsToPortfolioData = async (
       const date = transaction.timestamp.slice(0, 10);
       const title = transaction.title;
       const exchange = 'LS-X';
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
       let isin = '';
       let price = '';
       let quantity = '';
-      let currency = '';
-      const feeTax = '';
-      const feeCurrency = '';
+      const feeTax = '0';
 
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.type === 'header') {
@@ -210,10 +198,6 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          const currencySign = sharePriceSubSection?.detail?.text?.[0];
-          currency = currencySign
-            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
-            : '';
         }
       });
 
@@ -247,13 +231,15 @@ export const mapTransactionsToPortfolioData = async (
       const isin = transaction.icon.split('/')[1];
       const exchange = 'LS-X';
       const title = transaction.title;
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
       let price = '';
       let quantity = '';
-      let currency = '';
       let feeTax = '';
-      let feeCurrency = '';
+      let taxCorrectionAmount = ''; // Track tax correction separately
 
-      transaction.sections?.forEach((section) => {
+      for (const section of transaction.sections ?? []) {
         // Check for "Transaction" section (newer format)
         if ('title' in section && section.title === 'Transaction') {
           const tableSection = section as TransactionTableSection;
@@ -262,6 +248,12 @@ export const mapTransactionsToPortfolioData = async (
           );
           const sharePriceSubSection = tableSection.data.find(
             (subSection) => subSection.title === 'Share price',
+          );
+          const taxSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Tax',
+          );
+          const taxCorrectionSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Tax Correction',
           );
           const feeSubSection = tableSection.data.find(
             (subSection) => subSection.title === 'Fee',
@@ -273,62 +265,53 @@ export const mapTransactionsToPortfolioData = async (
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.text?.slice(1) ?? '0',
           ).toFixed();
-          const currencySign = sharePriceSubSection?.detail?.text?.[0];
-          currency = currencySign
-            ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
-            : '';
+          let taxValue = taxSubSection?.detail?.text;
+          taxValue = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
+
+          // Happens in sell orders, when the tax correction is a refund
+          taxCorrectionAmount = parseToBigNumber(
+            taxCorrectionSubSection?.detail?.text?.slice(3) ?? '0',
+          ).toFixed();
 
           const feeText = feeSubSection?.detail?.text;
           feeTax =
-            feeText === 'Free' || !feeText ? '' : (feeText?.slice(1) ?? '');
-          const feeCurrencySign = feeText?.[0];
-          feeCurrency =
-            feeText === 'Free' || !feeText || !feeTax || !feeCurrencySign
-              ? ''
-              : (SIGN_TO_CURRENCY_MAP[feeCurrencySign] ?? '');
+            feeText === 'Free'
+              ? '0'
+              : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
+          feeTax = calculateStringNumbers('add', [feeTax, taxValue]);
+          break;
         }
-
-        // Check for "Overview" section with Transaction subsection (older format)
+        // Check for "Overview" section with Transaction subsection, only if transactions section doesn't exist
         if ('title' in section && section.title === 'Overview') {
           const tableSection = section as TransactionTableSection;
           const transactionSubSection = tableSection.data.find(
             (subSection) => subSection.title === 'Transaction',
+          );
+          const taxSubSection = tableSection.data.find(
+            (subSection) => subSection.title === 'Tax',
           );
           const feeSubSection = tableSection.data.find(
             (subSection) => subSection.title === 'Fee',
           );
 
           // Only use this if we haven't already found data in Transaction section
-          if (transactionSubSection && !price) {
-            price = parseToBigNumber(
-              transactionSubSection?.detail?.displayValue?.text?.slice(1) ??
-                '0',
-            ).toFixed();
-            quantity = parseToBigNumber(
-              transactionSubSection?.detail?.displayValue?.prefix?.slice(
-                0,
-                -3,
-              ) ?? '0',
-            ).toFixed();
-            const currencySign =
-              transactionSubSection?.detail?.displayValue?.text?.[0];
-            currency = currencySign
-              ? (SIGN_TO_CURRENCY_MAP[currencySign] ?? '')
-              : '';
-          }
-
-          if (feeSubSection && !feeTax) {
-            const feeText = feeSubSection?.detail?.text;
-            feeTax =
-              feeText === 'Free' || !feeText ? '' : (feeText?.slice(1) ?? '');
-            const feeCurrencySign = feeText?.[0];
-            feeCurrency =
-              feeText === 'Free' || !feeText || !feeTax || !feeCurrencySign
-                ? ''
-                : (SIGN_TO_CURRENCY_MAP[feeCurrencySign] ?? '');
-          }
+          price = parseToBigNumber(
+            transactionSubSection?.detail?.displayValue?.text?.slice(1) ?? '0',
+          ).toFixed();
+          quantity = parseToBigNumber(
+            transactionSubSection?.detail?.displayValue?.prefix?.slice(0, -3) ??
+              '0',
+          ).toFixed();
+          let taxValue = taxSubSection?.detail?.text;
+          taxValue = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
+          const feeText = feeSubSection?.detail?.text;
+          feeTax =
+            feeText === 'Free'
+              ? '0'
+              : parseToBigNumber(feeText?.slice(1) ?? '0').toFixed();
+          feeTax = calculateStringNumbers('add', [feeTax, taxValue]);
         }
-      });
+      }
 
       const newTransaction = {
         title,
@@ -345,6 +328,22 @@ export const mapTransactionsToPortfolioData = async (
       };
 
       portfolioData.push(newTransaction);
+
+      // If there's a tax correction, create a separate cash gain transaction
+      if (parseToBigNumber(taxCorrectionAmount).isGreaterThan(0)) {
+        const taxCorrectionTransaction: CashTransaction = {
+          title: `${title} - Tax Correction`,
+          eventType: TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+          type: TRANSACTION_TYPE.CASH_GAIN,
+          date,
+          amount: taxCorrectionAmount,
+          currency,
+          feeTax: '0',
+          feeCurrency,
+        };
+        portfolioData.push(taxCorrectionTransaction);
+      }
+
       continue;
     }
 
@@ -355,14 +354,15 @@ export const mapTransactionsToPortfolioData = async (
         TRANSACTION_TYPE.CASH_GAIN;
       const date = transaction.timestamp.slice(0, 10);
       const title = transaction.title;
-      const currency = transaction.amount.currency;
       const amount = parseToBigNumber(
         transaction.amount.value.toString(),
       ).toFixed();
-      let feeTax = '';
-      let feeCurrency = '';
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
+      // For very old interest format, feeTax is always 0
+      let feeTax = '0';
 
-      // New interest format includes tax, but the old one does not
       transaction.sections?.forEach((section) => {
         if ('title' in section && section.title === 'Transaction') {
           const tableSection = section as TransactionTableSection;
@@ -370,17 +370,13 @@ export const mapTransactionsToPortfolioData = async (
             (subSection) => subSection.title === 'Tax',
           );
 
-          // displayValue is the old format, text is the new format
+          // We need to cover both because some interest transactions have a formatted displayValue
+          // The ones that don't have a formatted displayValue have formatted text value
           const taxValue =
             taxSubSection?.detail?.displayValue?.text ??
             taxSubSection?.detail?.text;
-          feeTax = taxValue?.slice(1) ?? '';
-          if (feeTax === '0.00') feeTax = '';
-          const taxCurrencySign = taxValue?.[0];
-          feeCurrency =
-            feeTax && taxCurrencySign
-              ? (SIGN_TO_CURRENCY_MAP[taxCurrencySign] ?? '')
-              : '';
+          feeTax = parseToBigNumber(taxValue?.slice(1) ?? '0').toFixed();
+          if (feeTax === '0.00') feeTax = '0';
         }
       });
 
@@ -411,9 +407,10 @@ export const mapTransactionsToPortfolioData = async (
       const amount = parseToBigNumber(
         Math.abs(transaction.amount.value).toString(),
       ).toFixed();
-      const currency = transaction.amount.currency;
-      const feeTax = '';
-      const feeCurrency = '';
+      // Currently all transactions are in EUR
+      const currency = 'EUR';
+      const feeCurrency = 'EUR';
+      const feeTax = '0';
 
       const newTransaction = {
         title,
@@ -429,11 +426,6 @@ export const mapTransactionsToPortfolioData = async (
       portfolioData.push(newTransaction);
       continue;
     }
-  }
-
-  // Save updated dividend PDFs data to JSON if it was modified
-  if (dividendPdfsDataUpdated) {
-    saveDividendPdfsData(dividendPdfsData, accountNumber);
   }
 
   return portfolioData;
