@@ -20,6 +20,7 @@ import {
   SUBSECTION_TITLE_TAX_CORRECTION,
   SUBSECTION_TITLE_TOTAL,
 } from './constants';
+import { identifyBuyOrSell } from './helpers';
 import {
   extractDate,
   extractIsinFromHeader,
@@ -27,9 +28,8 @@ import {
   findSubsection,
   findTableSection,
   getDetailText,
-  identifyBuyOrSell,
   parseToBigNumber,
-} from './helpers';
+} from './utils';
 
 export const handleDividend = (
   transaction: Transaction,

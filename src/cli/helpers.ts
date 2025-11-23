@@ -1,39 +1,14 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
 import { PortfolioData, Transaction } from '../types';
+import {
+  findAllAccountNumbers,
+  getPortfolioDataPath,
+  getTransactionsPath,
+} from './utils';
 
 // Account number will be set after downloading transactions
 let accountNumber: string | null = null;
-
-export const getTransactionsPath = (accountNum: string | null): string => {
-  if (!accountNum) {
-    throw new Error(
-      'Account number not available. Please download transactions first.',
-    );
-  }
-  return `build/${accountNum}/transactions.json`;
-};
-
-export const getPortfolioDataPath = (accountNum: string | null): string => {
-  if (!accountNum) {
-    throw new Error(
-      'Account number not available. Please download transactions first.',
-    );
-  }
-  return `build/${accountNum}/portfolioData.json`;
-};
-
-// Find all account numbers by scanning build folder
-export const findAllAccountNumbers = (): string[] => {
-  if (!fs.existsSync('build')) {
-    return [];
-  }
-
-  const entries = fs.readdirSync('build', { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-};
 
 // Get account number: use stored value, or find from build folder
 // If multiple exist, prompt user to choose

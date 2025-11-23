@@ -1,7 +1,7 @@
 import { PortfolioData } from '../../types';
 import { saveFile } from '../../utils/saveFile';
 import { FILE_NAME, HEADERS } from './constants';
-import { createCsvRow, isRowEmpty } from './helpers';
+import { createCsvRow, isRowEmpty } from './utils';
 import { convertItemToCsvRow } from './handlers';
 
 export const convertTransactionsToSnowballCsv = async (

@@ -13,7 +13,8 @@ import {
   EVENT_TYPE_CASH_GAIN,
   EVENT_TYPE_DIVIDEND,
 } from './constants';
-import { CsvRowData, getExchangeFromIsin } from './helpers';
+import { getExchangeFromIsin } from './helpers';
+import { CsvRowData } from './utils';
 
 export const handleDividend = async (
   item: DividendTransaction,
