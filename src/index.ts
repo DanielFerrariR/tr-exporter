@@ -224,8 +224,7 @@ const showMenu = async (): Promise<void> => {
           }
 
           console.log('Converting transactions to portfolio data...');
-          const portfolioData =
-            await mapTransactionsToPortfolioData(transactions);
+          const portfolioData = mapTransactionsToPortfolioData(transactions);
 
           saveFile(
             JSON.stringify(portfolioData, null, 2),

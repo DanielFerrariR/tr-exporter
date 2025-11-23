@@ -8,7 +8,7 @@ export enum TRANSACTION_TYPE {
 }
 
 // Buy and Sell
-interface OrderTransaction {
+export interface OrderTransaction {
   title: string;
   eventType:
     | TRANSACTION_EVENT_TYPE.TRADE
@@ -29,7 +29,7 @@ interface OrderTransaction {
 }
 
 // Dividend
-interface DividendTransaction {
+export interface DividendTransaction {
   title: string;
   eventType: TRANSACTION_EVENT_TYPE.DIVIDEND;
   date: string;
