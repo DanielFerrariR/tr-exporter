@@ -4,16 +4,48 @@ Export all your transactions from Trade Republic to be used in your portfolio tr
 
 This project is not affiliated with Trade Republic Bank GmbH.
 
-Currently supported transactions:
+## Supported Transactions
 
-- trades
-- savings plans
-- roundups
-- 15 euros per month bonus
-- dividends
-- interests
-- tax corrections
-- received stock gift (when opening an account and from a friend)
+The following transaction types are fully supported and will be exported:
+
+- **Trades** - Buy and sell orders (including limit orders)
+- **Savings Plans** - Automated savings plan executions
+- **Roundups** - Roundup transactions
+- **Cashback** - 15 euros per month bonus (Saveback)
+- **Dividends** - Cash dividends
+- **Interest** - Interest payments
+- **Tax Corrections** - Tax correction transactions
+- **Stock Perk** - Received stock gifts when opening an account
+- **Received Gift** - Received stock gifts from a friend
+
+## Not Supported Transactions
+
+The following transaction types are downloaded to `transactions.json` but are **not processed** into `portfolioData.json` or exported to portfolio trackers (e.g., Snowball Analytics):
+
+- **Sent Gift** - Sent stock gifts to a friend
+- **Transfer** - Money transfers between accounts
+- **Card Payment** - Merchant card payments
+- **Status Indicator** - Declined, cancelled, or verification transactions
+- **Savings Plan for Children** - Savings plan for children
+
+## CLI Options
+
+When you run `pnpm start`, you'll see an interactive menu with the following options:
+
+1. **Download Transactions** - Fetches all transactions from Trade Republic API and saves them to `build/transactions.json`
+2. **Convert Transactions to Portfolio Data** - Converts existing `build/transactions.json` to `build/portfolioData.json` (useful if you've updated transaction processing logic and want to regenerate portfolio data without refetching)
+3. **Convert Portfolio Data to Export Format** - Converts `build/portfolioData.json` to your preferred export format (e.g., Snowball Analytics CSV)
+4. **Connect to WebSocket (interact via prompt)** - Interactive WebSocket connection for debugging and testing
+
+   **Supported Commands:**
+   - `{"type": "timelineTransactions", "after": "..."}` - List transactions (optional `after` parameter for pagination using hash from previous call)
+   - `{"type": "timelineDetailV2", "id": "timeline_id"}` - Get detailed information for a specific transaction (requires `timeline_id`)
+   - `{"type": "timelineActivityLog", "after": "..."}` - List activities (optional `after` parameter for pagination using hash from previous call)
+   - `{"type": "cash"}` - Get account information (Account ID, Currency, and Cash Balance)
+
+   For additional commands, refer to the [pytr repository](https://github.com/pytr-org/pytr/blob/master/pytr/api.py).
+
+5. **Exit** - Exit the application
 
 ## Features
 
@@ -21,32 +53,16 @@ Currently supported transactions:
 - Convert transactions to portfolio data (regenerate portfolio data from existing transactions.json)
 - Convert portfolio data to export formats (please request support for unsupported trackers):
   - Snowball Analytics
-- Connect to WebSocket (interact via prompt)
-  - Known supported commands:
-    - Transactions: {"type": "timelineTransactions", after: '...' } // list of transactions with optional 'after' option to get the next list of transactions (after needs the hash from the previous call)
-    - Transaction Details: {"type": "timelineDetailV2", "id": timeline_id } // extra details of a transactions with required timeline_id that is id of a transaction
-    - Activity Log: {"type": "timelineActivityLog", after: '...' } // list of activies with optional 'after' option to get the next list of activities (after needs the hash from the previous call)
-    - Cash: {"type": "cash" } // Account Information - Account Id, Currency and Cash Balance
-    - Can get more of options from https://github.com/pytr-org/pytr/blob/master/pytr/api.py code, but this project isn't supporting and explaining how to use the others for now
 
-## Steps
+## Installation & Setup
 
-1 - Install Node 20.19.0 (use the exact version to avoid errors)
+1. Install Node 20.19.0 (use the exact version to avoid errors)
 
-2 - Install pnpm (if not already installed): `npm install -g pnpm`
+2. Install pnpm (if not already installed): `npm install -g pnpm`
 
-3 - pnpm install
+3. Install dependencies: `pnpm install`
 
-4 - pnpm start
-
-## Usage
-
-When you run `pnpm start`, you'll see a menu with the following options:
-
-1. **Download Transactions** - Fetches all transactions from Trade Republic API and saves them to `build/transactions.json`
-2. **Convert Transactions to Portfolio Data** - Converts existing `build/transactions.json` to `build/portfolioData.json` (useful if you've updated transaction processing logic and want to regenerate portfolio data without refetching)
-3. **Convert Portfolio Data to Export Format** - Converts `build/portfolioData.json` to your preferred export format (e.g., Snowball Analytics CSV)
-4. **Connect to WebSocket** - Interactive WebSocket connection for debugging and testing
+4. Run the application: `pnpm start`
 
 ## Tip
 
