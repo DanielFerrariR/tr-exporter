@@ -15,8 +15,9 @@ The following transaction types are fully supported and will be exported:
 - **Dividends** - Cash dividends
 - **Interest** - Interest payments
 - **Tax Corrections** - Tax correction transactions
-- **Stock Perk** - Received stock gifts when opening an account
+- **Welcome Stock Gift** - Welcome stock gifts when opening an account
 - **Received Gift** - Received stock gifts from a friend
+- **Give Away Gift** - Received stock gifts from Trade Republic
 
 ## Not Supported Transactions
 

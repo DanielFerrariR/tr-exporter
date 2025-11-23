@@ -42,13 +42,19 @@ export const mapTransactionsToPortfolioData = (
           portfolioData.push(handleDividend(transaction));
           break;
 
-        case TRANSACTION_EVENT_TYPE.STOCK_PERK:
+        case TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT:
           portfolioData.push(
             handleStockGift(transaction, SECTION_TITLE_TRANSACTION),
           );
           break;
 
         case TRANSACTION_EVENT_TYPE.RECEIVED_GIFT:
+          portfolioData.push(
+            handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
+          );
+          break;
+
+        case TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT:
           portfolioData.push(
             handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
           );

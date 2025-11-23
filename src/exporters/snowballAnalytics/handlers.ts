@@ -92,8 +92,9 @@ export const convertItemToCsvRow = async (
       item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
       item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
       item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
-      item.eventType === TRANSACTION_EVENT_TYPE.STOCK_PERK ||
-      item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
+      item.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
+      item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
+      item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY
     ) {
       return await handleOrderTransaction(item);
     }

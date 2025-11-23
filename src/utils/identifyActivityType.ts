@@ -10,14 +10,20 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.RECEIVED_GIFT;
   }
 
-  // Stock Perk
+  // Welcome Stock Gift
   if (activity.title === 'Stock Perk' && activity.subtitle === 'Redeemed') {
-    return ACTIVITY_EVENT_TYPE.STOCK_PERK;
+    return ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT;
   }
 
-  // Stock Perk Expired
+  // Give Away Gift
+  if (activity.title === 'Give-away' && activity.subtitle === 'Redeemed') {
+    return ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT;
+  }
+
+  // Non-portfolio-related transactions
+  // Welcome Stock Gift Expired
   if (activity.title === 'Stock Perk' && activity.subtitle === 'Expired') {
-    return ACTIVITY_EVENT_TYPE.STOCK_PERK_EXPIRED;
+    return ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT_EXPIRED;
   }
 
   // Cash or Stock (dividend reinvestment options)
@@ -46,7 +52,6 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.SECURITY_CHANGE;
   }
 
-  // Non-portfolio-related transactions
   // Legal Documents
   if (
     activity.title === 'Legal Documents' &&

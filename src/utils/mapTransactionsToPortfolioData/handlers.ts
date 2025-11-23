@@ -126,8 +126,9 @@ export const handleStockGift = (
   return {
     title: transaction.title,
     eventType: transaction.eventType as
-      | TRANSACTION_EVENT_TYPE.STOCK_PERK
-      | TRANSACTION_EVENT_TYPE.RECEIVED_GIFT,
+      | TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT
+      | TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
+      | TRANSACTION_EVENT_TYPE.GIVE_AWAY,
     type,
     date,
     isin,

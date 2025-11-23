@@ -9,7 +9,8 @@ export const getGiftTransactions = (activities: Activity[]): Transaction[] =>
         !!activity.eventType &&
         [
           ACTIVITY_EVENT_TYPE.RECEIVED_GIFT,
-          ACTIVITY_EVENT_TYPE.STOCK_PERK,
+          ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT,
+          ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT,
         ].includes(activity.eventType),
     )
     .map((activity) => ({
@@ -32,10 +33,16 @@ export const getGiftTransactions = (activities: Activity[]): Transaction[] =>
         type: 'timelineDetail',
         payload: activity.id,
       },
-      eventType:
-        activity.eventType === ACTIVITY_EVENT_TYPE.RECEIVED_GIFT
-          ? TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
-          : TRANSACTION_EVENT_TYPE.STOCK_PERK,
+      eventType: (() => {
+        if (activity.eventType === ACTIVITY_EVENT_TYPE.RECEIVED_GIFT) {
+          return TRANSACTION_EVENT_TYPE.RECEIVED_GIFT;
+        }
+        if (activity.eventType === ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT) {
+          return TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT;
+        }
+        // Give away is the default case
+        return TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT;
+      })(),
       cashAccountNumber: null,
       hidden: false,
       deleted: false,

@@ -62,12 +62,20 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.SENT_GIFT;
   }
 
-  // Stock Perk
+  // Welcome Stock Gift
   if (
     transaction.title === 'Stock Perk' &&
     transaction.subtitle === 'Redeemed'
   ) {
-    return TRANSACTION_EVENT_TYPE.STOCK_PERK;
+    return TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT;
+  }
+
+  // Give Away Gift
+  if (
+    transaction.title === 'Give-away' &&
+    transaction.subtitle === 'Redeemed'
+  ) {
+    return TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT;
   }
 
   // Non-portfolio-related transactions

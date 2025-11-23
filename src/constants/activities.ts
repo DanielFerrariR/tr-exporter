@@ -1,8 +1,9 @@
 export enum ACTIVITY_EVENT_TYPE {
   // Portfolio-related activities
   RECEIVED_GIFT = 'Received Gift', // Received stock gifts from a friend
-  STOCK_PERK = 'Stock Perk', // Received stock gifts when opening an account
-  STOCK_PERK_EXPIRED = 'Stock Perk Expired', // Expired stock perks
+  WELCOME_STOCK_GIFT = 'Welcome Stock Gift', // Welcome stock gifts when opening an account
+  GIVE_AWAY_GIFT = 'Give Away Gift', // Give away stock gifts from Trade Republic
+  WELCOME_STOCK_GIFT_EXPIRED = 'Welcome Stock Gift Expired', // Expired Welcome stock gifts
   CASH_OR_STOCK = 'Cash or Stock', // Dividend reinvestment options
   LIMIT_ORDER_CANCELED = 'Limit Order Canceled', // Cancelled limit buy/sell orders
   ORDER_REJECTED = 'Order Rejected', // Rejected buy/sell orders
