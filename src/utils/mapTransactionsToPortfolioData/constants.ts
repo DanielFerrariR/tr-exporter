@@ -1,0 +1,11 @@
+export const DEFAULT_EXCHANGE = 'LS-X';
+export const DEFAULT_CURRENCY = 'EUR';
+export const DEFAULT_FEE_CURRENCY = 'EUR';
+export const SECTION_TITLE_TRANSACTION = 'Transaction';
+export const SECTION_TITLE_OVERVIEW = 'Overview';
+export const SUBSECTION_TITLE_SHARES = 'Shares';
+export const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
+export const SUBSECTION_TITLE_TAX = 'Tax';
+export const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
+export const SUBSECTION_TITLE_FEE = 'Fee';
+export const SUBSECTION_TITLE_TOTAL = 'Total';

@@ -209,10 +209,7 @@ export const getTransactions = async (): Promise<{
 
             console.log('Generating portfolio data...');
             const portfolioData: PortfolioData =
-              await mapTransactionsToPortfolioData(
-                transactions,
-                accountInformation.accountNumber,
-              );
+              mapTransactionsToPortfolioData(transactions);
 
             saveFile(
               JSON.stringify(portfolioData, null, 2),

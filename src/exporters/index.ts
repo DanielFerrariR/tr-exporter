@@ -1,5 +1,5 @@
 import { PortfolioData } from '../types';
-import { convertTransactionsToSnowballCsv } from './snowballAnalytics/convertTransactionsToSnowballCsv';
+import { convertTransactionsToSnowballCsv } from './snowballAnalytics';
 
 export interface Exporter {
   id: string;
