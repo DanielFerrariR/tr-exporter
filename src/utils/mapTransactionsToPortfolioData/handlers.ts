@@ -128,7 +128,7 @@ export const handleStockGift = (
     eventType: transaction.eventType as
       | TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT
       | TRANSACTION_EVENT_TYPE.RECEIVED_GIFT
-      | TRANSACTION_EVENT_TYPE.GIVE_AWAY,
+      | TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT,
     type,
     date,
     isin,
