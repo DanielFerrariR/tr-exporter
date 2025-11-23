@@ -260,7 +260,6 @@ export const mapTransactionsToPortfolioData = async (
             sharesSubSection?.detail?.displayValue?.text ??
               sharesSubSection?.detail?.text,
           ).toFixed();
-          console.log(quantity);
           price = parseToBigNumber(
             sharePriceSubSection?.detail?.displayValue?.text ??
               sharePriceSubSection?.detail?.text,
