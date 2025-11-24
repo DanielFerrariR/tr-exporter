@@ -48,13 +48,8 @@ export const mapTransactionsToPortfolioData = (
           );
           break;
 
-        case TRANSACTION_EVENT_TYPE.RECEIVED_GIFT:
-          portfolioData.push(
-            handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
-          );
-          break;
-
         case TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT:
+        case TRANSACTION_EVENT_TYPE.RECEIVED_GIFT:
           portfolioData.push(
             handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
           );
