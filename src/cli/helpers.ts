@@ -50,7 +50,10 @@ export const setAccountNumber = (accountNum: string): void => {
   accountNumber = accountNum;
 };
 
-export const loadTransactions = async (): Promise<Transaction[] | null> => {
+export const loadTransactions = async (): Promise<{
+  transactions: Transaction[];
+  accountNum: string;
+} | null> => {
   // Get account number (with user selection if multiple exist)
   const accountNum = await getAccountNumber();
 
@@ -73,14 +76,18 @@ export const loadTransactions = async (): Promise<Transaction[] | null> => {
 
   try {
     console.log(`Reading transactions from ${transactionsPath}...`);
-    return JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
+    const transactions = JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
+    return { transactions, accountNum };
   } catch (error) {
     console.error(`Error reading ${transactionsPath}:`, error);
     return null;
   }
 };
 
-export const loadPortfolioData = async (): Promise<PortfolioData | null> => {
+export const loadPortfolioData = async (): Promise<{
+  portfolioData: PortfolioData;
+  accountNum: string;
+} | null> => {
   // Get account number (with user selection if multiple exist)
   const accountNum = await getAccountNumber();
 
@@ -103,7 +110,10 @@ export const loadPortfolioData = async (): Promise<PortfolioData | null> => {
 
   try {
     console.log(`Reading portfolio data from ${portfolioDataPath}...`);
-    return JSON.parse(fs.readFileSync(portfolioDataPath, 'utf8'));
+    const portfolioData = JSON.parse(
+      fs.readFileSync(portfolioDataPath, 'utf8'),
+    );
+    return { portfolioData, accountNum };
   } catch (error) {
     console.error(`Error reading ${portfolioDataPath}:`, error);
     return null;

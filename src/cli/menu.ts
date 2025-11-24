@@ -9,7 +9,6 @@ import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
 import { login } from '@/cli/login';
 import { MENU_OPTIONS } from '@/cli/constants';
 import {
-  getAccountNumber,
   loadPortfolioData,
   loadTransactions,
   setAccountNumber,
@@ -33,17 +32,10 @@ const handleDownloadTransactions = async (): Promise<void> => {
 
 const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
   try {
-    const transactions = await loadTransactions();
-    if (!transactions) return;
+    const result = await loadTransactions();
+    if (!result) return;
 
-    // Get account number (with user selection if multiple exist)
-    const accountNum = await getAccountNumber();
-    if (!accountNum) {
-      console.error(
-        'Error: Account number not found. Cannot convert transactions to portfolio data.',
-      );
-      return;
-    }
+    const { transactions, accountNum } = result;
 
     console.log('Converting transactions to portfolio data...');
     const portfolioData = mapTransactionsToPortfolioData(transactions);
@@ -61,17 +53,10 @@ const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
 
 const handleConvertTransactions = async (): Promise<void> => {
   try {
-    const portfolioData = await loadPortfolioData();
-    if (!portfolioData) return;
+    const result = await loadPortfolioData();
+    if (!result) return;
 
-    // Get account number (with user selection if multiple exist)
-    const accountNum = await getAccountNumber();
-    if (!accountNum) {
-      console.error(
-        'Error: Account number not found. Cannot convert portfolio data.',
-      );
-      return;
-    }
+    const { portfolioData, accountNum } = result;
 
     // Show available exporters
     const { exporterId } = await inquirer.prompt([

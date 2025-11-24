@@ -35,6 +35,7 @@ const saveCache = (): void => {
     JSON.stringify(isinToExchange, null, 2),
     'isinToExchange.json',
     'build',
+    true,
   );
 };
 
