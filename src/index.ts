@@ -1,4 +1,4 @@
-import { run } from './cli';
+import { run } from '@/cli';
 
 (async () => {
   await run();

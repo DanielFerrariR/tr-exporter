@@ -1,4 +1,4 @@
-import { TRANSACTION_EVENT_TYPE } from '../../constants';
+import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import {
   CashTransaction,
   DividendTransaction,
@@ -6,7 +6,7 @@ import {
   PortfolioData,
   Transaction,
   TRANSACTION_TYPE,
-} from '../../types';
+} from '@/types';
 import {
   DEFAULT_CURRENCY,
   DEFAULT_EXCHANGE,

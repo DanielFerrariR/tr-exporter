@@ -1,4 +1,4 @@
-import { ACTIVITY_EVENT_TYPE } from '../constants';
+import { ACTIVITY_EVENT_TYPE } from '@/constants';
 
 export interface ActivityAction {
   type: 'timelineDetail';

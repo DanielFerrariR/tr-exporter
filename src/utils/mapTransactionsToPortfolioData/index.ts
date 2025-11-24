@@ -1,5 +1,5 @@
-import { TRANSACTION_EVENT_TYPE } from '../../constants';
-import { PortfolioData, Transaction } from '../../types';
+import { TRANSACTION_EVENT_TYPE } from '@/constants';
+import { PortfolioData, Transaction } from '@/types';
 import {
   handleDividend,
   handleInterest,

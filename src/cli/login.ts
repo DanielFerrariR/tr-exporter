@@ -1,9 +1,9 @@
 import readlineSync from 'readline-sync';
-import { TradeRepublicAPI } from '../api';
+import { TradeRepublicAPI } from '@/api';
 import {
   TradeRepublicApiLoginError,
   TradeRepublicApiPinVerificationError,
-} from '../types';
+} from '@/types';
 
 export async function login(): Promise<boolean> {
   console.log('Starting Trade Republic login process...');

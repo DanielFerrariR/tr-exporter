@@ -1,5 +1,5 @@
-import { TRANSACTION_EVENT_TYPE } from '../../constants';
-import { Transaction, TRANSACTION_TYPE } from '../../types';
+import { TRANSACTION_EVENT_TYPE } from '@/constants';
+import { Transaction, TRANSACTION_TYPE } from '@/types';
 
 export const identifyBuyOrSell = (
   transaction: Transaction,

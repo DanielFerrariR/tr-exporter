@@ -4,16 +4,16 @@ import {
   interactiveSocketConnection,
   EXPORTERS,
   getExporterById,
-} from '../features';
-import { mapTransactionsToPortfolioData, saveFile } from '../utils';
-import { login } from './login';
-import { MENU_OPTIONS } from './constants';
+} from '@/features';
+import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
+import { login } from '@/cli/login';
+import { MENU_OPTIONS } from '@/cli/constants';
 import {
   getAccountNumber,
   loadPortfolioData,
   loadTransactions,
   setAccountNumber,
-} from './helpers';
+} from '@/cli/helpers';
 
 const handleDownloadTransactions = async (): Promise<void> => {
   try {

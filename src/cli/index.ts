@@ -1,4 +1,4 @@
-import { showMenu } from './menu';
+import { showMenu } from '@/cli/menu';
 
 // Setup graceful exit handler
 const setupExitHandler = () => {

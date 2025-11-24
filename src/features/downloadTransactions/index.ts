@@ -1,4 +1,4 @@
-import { saveFile } from '../../utils/saveFile';
+import { saveFile } from '@/utils/saveFile';
 import {
   Transaction,
   TransactionDetailsResponse,
@@ -8,15 +8,15 @@ import {
   PortfolioData,
   AccountInformation,
   SplitMessage,
-} from '../../types';
-import { TradeRepublicAPI } from '../../api';
-import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '../../constants';
+} from '@/types';
+import { TradeRepublicAPI } from '@/api';
+import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '@/constants';
 import {
   identifyTransactionEventType,
   identifyActivityEventType,
   getGiftTransactions,
 } from './helpers';
-import { mapTransactionsToPortfolioData } from '../../utils/mapTransactionsToPortfolioData';
+import { mapTransactionsToPortfolioData } from '@/utils/mapTransactionsToPortfolioData';
 import { CloseEvent, ErrorEvent } from 'ws';
 import {
   ACCOUNT_INFORMATION_FILE_NAME,

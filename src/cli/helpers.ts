@@ -1,6 +1,6 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
-import { PortfolioData, Transaction } from '../types';
+import { PortfolioData, Transaction } from '@/types';
 import {
   findAllAccountNumbers,
   getPortfolioDataPath,

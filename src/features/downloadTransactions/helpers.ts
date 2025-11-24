@@ -1,5 +1,5 @@
-import { ACTIVITY_EVENT_TYPE, TRANSACTION_EVENT_TYPE } from '../../constants';
-import { Activity, Transaction } from '../../types';
+import { ACTIVITY_EVENT_TYPE, TRANSACTION_EVENT_TYPE } from '@/constants';
+import { Activity, Transaction } from '@/types';
 
 export const identifyActivityEventType = (
   activity: Activity,

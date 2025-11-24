@@ -1,4 +1,4 @@
-import { TRANSACTION_EVENT_TYPE } from '../constants';
+import { TRANSACTION_EVENT_TYPE } from '@/constants';
 
 export interface TransactionAction {
   type: string;

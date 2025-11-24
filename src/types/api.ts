@@ -1,7 +1,10 @@
 import { CloseEvent, ErrorEvent } from 'ws';
-import { SUBSCRIPTION_TYPES } from '../constants';
-import { ActivityPayload } from './activities';
-import { TransactionDetailsPayload, TransactionPayload } from './transactions';
+import { SUBSCRIPTION_TYPES } from '@/constants';
+import { ActivityPayload } from '@/types/activities';
+import {
+  TransactionDetailsPayload,
+  TransactionPayload,
+} from '@/types/transactions';
 
 export interface LoginPayload {
   phoneNumber: string;

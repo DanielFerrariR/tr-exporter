@@ -1,6 +1,6 @@
 import readline from 'readline';
-import { TradeRepublicAPI } from '../../api';
-import { CONNECTION_STATUS } from '../../constants';
+import { TradeRepublicAPI } from '@/api';
+import { CONNECTION_STATUS } from '@/constants';
 
 export const interactiveSocketConnection = (): Promise<void> => {
   return new Promise((resolve, reject) => {

@@ -1,5 +1,5 @@
-import { PortfolioData } from '../../../types';
-import { saveFile } from '../../../utils/saveFile';
+import { PortfolioData } from '@/types';
+import { saveFile } from '@/utils/saveFile';
 import { FILE_NAME, HEADERS } from './constants';
 import { createCsvRow, isRowEmpty } from './utils';
 import { convertItemToCsvRow } from './handlers';

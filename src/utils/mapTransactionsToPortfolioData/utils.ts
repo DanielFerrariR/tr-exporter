@@ -4,7 +4,7 @@ import {
   TransactionHeaderSection,
   TransactionSection,
   TransactionTableSection,
-} from '../../types';
+} from '@/types';
 
 export const extractIsinFromIcon = (icon: string): string => {
   const parts = icon.split('/');

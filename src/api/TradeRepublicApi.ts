@@ -9,7 +9,7 @@ import {
   TradeRepublicApiLoginError,
   TradeRepublicApiPinVerificationError,
   VerifySmsPinPayload,
-} from '../types';
+} from '@/types';
 import {
   CONNECTION_MESSAGE,
   CONNECTION_STATUS,
@@ -17,7 +17,7 @@ import {
   TRADE_REPUBLIC_API_HEADERS,
   TRADE_REPUBLIC_API_URL,
   TRADE_REPUBLIC_WEBSOCKET_URL,
-} from '../constants';
+} from '@/constants';
 import WebSocket from 'ws';
 
 export class TradeRepublicAPI {
