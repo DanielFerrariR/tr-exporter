@@ -1,8 +1,12 @@
 import inquirer from 'inquirer';
-import { downloadTransactions, interactiveSocket } from '../features';
+import {
+  downloadTransactions,
+  interactiveSocketConnection,
+  EXPORTERS,
+  getExporterById,
+} from '../features';
 import { mapTransactionsToPortfolioData, saveFile } from '../utils';
 import { login } from './login';
-import { EXPORTERS, getExporterById } from '../exporters';
 import { MENU_OPTIONS } from './constants';
 import {
   getAccountNumber,
@@ -116,7 +120,7 @@ const handleInteractiveSocketConnection = async (): Promise<void> => {
       console.error('Login failed. Please try again.');
       return;
     }
-    await interactiveSocket();
+    await interactiveSocketConnection();
     // After interactive session ends, return to menu
   } catch (error) {
     console.error('Error in interactive socket connection:', error);

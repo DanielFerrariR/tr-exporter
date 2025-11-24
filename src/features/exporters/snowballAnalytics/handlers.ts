@@ -1,11 +1,11 @@
-import { TRANSACTION_EVENT_TYPE } from '../../constants';
+import { TRANSACTION_EVENT_TYPE } from '../../../constants';
 import {
   TRANSACTION_TYPE,
   CashTransaction,
   DividendTransaction,
   OrderTransaction,
   PortfolioData,
-} from '../../types';
+} from '../../../types';
 import {
   DEFAULT_PRICE_FOR_CASH,
   EMPTY_STRING,

@@ -1,2 +1,3 @@
 export * from './downloadTransactions';
-export * from './interactiveSocket';
+export * from './interactiveSocketConnection';
+export * from './exporters';
