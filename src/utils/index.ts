@@ -7,3 +7,5 @@ export * from './identifyTransactionEventType';
 export * from './getGiftTransactions';
 export * from './interactiveSocketConnection';
 export * from './downloadTransactions';
+export * from './getAccountNumber';
+export * from './login';
