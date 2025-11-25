@@ -5,12 +5,12 @@ import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
 
 export const loadTransactions = async (): Promise<{
   transactions: Transaction[];
-  accountNum: string;
+  accountNumber: string;
 } | null> => {
   // Get account number (with user selection if multiple exist)
-  const accountNum = await getAccountNumber();
+  const accountNumber = await getAccountNumber();
 
-  if (!accountNum) {
+  if (!accountNumber) {
     console.error('Error: Account number not found.');
     console.error(
       'Please download transactions first using option 1 before converting.',
@@ -18,7 +18,7 @@ export const loadTransactions = async (): Promise<{
     return null;
   }
 
-  const transactionsPath = `build/${accountNum}/transactions.json`;
+  const transactionsPath = `build/${accountNumber}/transactions.json`;
   if (!fs.existsSync(transactionsPath)) {
     console.error(`Error: ${transactionsPath} not found.`);
     console.error(
@@ -30,7 +30,7 @@ export const loadTransactions = async (): Promise<{
   try {
     console.log(`Reading transactions from ${transactionsPath}...`);
     const transactions = JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
-    return { transactions, accountNum };
+    return { transactions, accountNumber };
   } catch (error) {
     console.error(`Error reading ${transactionsPath}:`, error);
     return null;
@@ -42,7 +42,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     const result = await loadTransactions();
     if (!result) return;
 
-    const { transactions, accountNum } = result;
+    const { transactions, accountNumber } = result;
 
     console.log('Converting transactions to portfolio data...');
     const portfolioData = mapTransactionsToPortfolioData(transactions);
@@ -50,7 +50,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     saveFile(
       JSON.stringify(portfolioData, null, 2),
       'portfolioData.json',
-      `build/${accountNum}`,
+      `build/${accountNumber}`,
     );
     console.log('Portfolio data generated successfully.');
   } catch (error) {

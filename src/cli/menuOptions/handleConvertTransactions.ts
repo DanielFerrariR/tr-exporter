@@ -6,12 +6,12 @@ import inquirer from 'inquirer';
 
 const loadPortfolioData = async (): Promise<{
   portfolioData: PortfolioData;
-  accountNum: string;
+  accountNumber: string;
 } | null> => {
   // Get account number (with user selection if multiple exist)
-  const accountNum = await getAccountNumber();
+  const accountNumber = await getAccountNumber();
 
-  if (!accountNum) {
+  if (!accountNumber) {
     console.error('Error: Account number not found.');
     console.error(
       'Please download transactions first using option 1 before converting.',
@@ -19,7 +19,7 @@ const loadPortfolioData = async (): Promise<{
     return null;
   }
 
-  const portfolioDataPath = `build/${accountNum}/portfolioData.json`;
+  const portfolioDataPath = `build/${accountNumber}/portfolioData.json`;
   if (!fs.existsSync(portfolioDataPath)) {
     console.error(`Error: ${portfolioDataPath} not found.`);
     console.error(
@@ -33,7 +33,7 @@ const loadPortfolioData = async (): Promise<{
     const portfolioData = JSON.parse(
       fs.readFileSync(portfolioDataPath, 'utf8'),
     );
-    return { portfolioData, accountNum };
+    return { portfolioData, accountNumber };
   } catch (error) {
     console.error(`Error reading ${portfolioDataPath}:`, error);
     return null;
@@ -45,7 +45,7 @@ export const handleConvertTransactions = async (): Promise<void> => {
     const result = await loadPortfolioData();
     if (!result) return;
 
-    const { portfolioData, accountNum } = result;
+    const { portfolioData, accountNumber } = result;
 
     // Show available exporters
     const { exporterId } = await inquirer.prompt([
@@ -74,7 +74,7 @@ export const handleConvertTransactions = async (): Promise<void> => {
       return;
     }
 
-    await exporter.convert(portfolioData, accountNum);
+    await exporter.convert(portfolioData, accountNumber);
     console.log(`Conversion to ${exporter.name} completed successfully.`);
   } catch (error: unknown) {
     // Handle Ctrl+C (SIGINT) gracefully

@@ -34,9 +34,9 @@ export const getAccountNumber = async (): Promise<string | null> => {
       type: 'list',
       name: 'selectedAccountNumber',
       message: 'Multiple account directories found. Please select one:',
-      choices: accountNumbers.map((accNum) => ({
-        name: accNum,
-        value: accNum,
+      choices: accountNumbers.map((accountNumber) => ({
+        name: accountNumber,
+        value: accountNumber,
       })),
     },
   ]);
