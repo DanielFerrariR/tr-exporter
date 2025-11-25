@@ -11,20 +11,17 @@ import {
 } from '@/types';
 import { TradeRepublicAPI } from '@/api';
 import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '@/constants';
-import {
-  identifyTransactionEventType,
-  identifyActivityEventType,
-  getGiftTransactions,
-} from './helpers';
 import { mapTransactionsToPortfolioData } from '@/utils/mapTransactionsToPortfolioData';
 import { CloseEvent, ErrorEvent } from 'ws';
-import {
-  ACCOUNT_INFORMATION_FILE_NAME,
-  OUTPUT_DIRECTORY,
-  ACTIVITIES_FILE_NAME,
-  TRANSACTIONS_FILE_NAME,
-  PORTFOLIO_DATA_FILE_NAME,
-} from './constants';
+import { getGiftTransactions } from '@/utils/getGiftTransactions';
+import { identifyActivityEventType } from '@/utils/identifyActivityEventType';
+import { identifyTransactionEventType } from '@/utils/identifyTransactionEventType';
+
+export const OUTPUT_DIRECTORY = 'build';
+export const TRANSACTIONS_FILE_NAME = 'transactions.json';
+export const ACTIVITIES_FILE_NAME = 'activities.json';
+export const ACCOUNT_INFORMATION_FILE_NAME = 'accountInformation.json';
+export const PORTFOLIO_DATA_FILE_NAME = 'portfolioData.json';
 
 export const downloadTransactions = async (): Promise<{
   transactions: Transaction[];

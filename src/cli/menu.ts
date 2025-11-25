@@ -1,18 +1,25 @@
 import inquirer from 'inquirer';
+import { EXPORTERS, getExporterById } from '@/exporters';
 import {
   downloadTransactions,
   interactiveSocketConnection,
-  EXPORTERS,
-  getExporterById,
-} from '@/features';
-import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
+  mapTransactionsToPortfolioData,
+  saveFile,
+} from '@/utils';
 import { login } from '@/cli/login';
-import { MENU_OPTIONS } from '@/cli/constants';
 import {
   loadPortfolioData,
   loadTransactions,
   setAccountNumber,
 } from '@/cli/helpers';
+
+const MENU_OPTIONS = {
+  DOWNLOAD_TRANSACTIONS: 'downloadTransactions',
+  CONVERT_TRANSACTIONS_TO_PORTFOLIO: 'convertTransactionsToPortfolio',
+  CONVERT_TRANSACTIONS: 'convertTransactions',
+  INTERACTIVE_SOCKET_CONNECTION: 'interactiveSocketConnection',
+  EXIT: 'exit',
+} as const;
 
 const handleDownloadTransactions = async (): Promise<void> => {
   try {

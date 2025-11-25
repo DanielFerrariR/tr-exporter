@@ -6,34 +6,97 @@ import {
   PortfolioData,
   Transaction,
   TRANSACTION_TYPE,
+  TransactionDataObject,
+  TransactionHeaderSection,
+  TransactionSection,
+  TransactionTableSection,
 } from '@/types';
-import {
-  DEFAULT_CURRENCY,
-  DEFAULT_EXCHANGE,
-  DEFAULT_FEE_CURRENCY,
-  SECTION_TITLE_OVERVIEW,
-  SECTION_TITLE_TRANSACTION,
-  SUBSECTION_TITLE_FEE,
-  SUBSECTION_TITLE_SHARE_PRICE,
-  SUBSECTION_TITLE_SHARES,
-  SUBSECTION_TITLE_TAX,
-  SUBSECTION_TITLE_TAX_CORRECTION,
-  SUBSECTION_TITLE_TOTAL,
-} from './constants';
-import { identifyBuyOrSell } from './helpers';
-import {
-  extractDate,
-  extractIsinFromHeader,
-  extractIsinFromIcon,
-  findSubsection,
-  findTableSection,
-  getDetailText,
-  parseToBigNumber,
-} from './utils';
+import { identifyBuyOrSell } from '@/utils/identifyBuyOrSell';
+import { BigNumber } from 'bignumber.js';
 
-export const handleDividend = (
-  transaction: Transaction,
-): DividendTransaction => {
+const DEFAULT_EXCHANGE = 'LS-X';
+const DEFAULT_CURRENCY = 'EUR';
+const DEFAULT_FEE_CURRENCY = 'EUR';
+const SECTION_TITLE_TRANSACTION = 'Transaction';
+const SECTION_TITLE_OVERVIEW = 'Overview';
+const SUBSECTION_TITLE_SHARES = 'Shares';
+const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
+const SUBSECTION_TITLE_TAX = 'Tax';
+const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
+const SUBSECTION_TITLE_FEE = 'Fee';
+const SUBSECTION_TITLE_TOTAL = 'Total';
+
+const extractIsinFromIcon = (icon: string): string => {
+  const parts = icon.split('/');
+  if (parts.length < 2) {
+    throw new Error(`Invalid icon format: ${icon}`);
+  }
+  return parts[1];
+};
+
+const extractDate = (timestamp: string): string => timestamp.slice(0, 10);
+
+const getDetailText = (
+  subsection: TransactionDataObject | undefined,
+): string | undefined => {
+  return subsection?.detail?.displayValue?.text ?? subsection?.detail?.text;
+};
+
+const findSubsection = (
+  tableSection: TransactionTableSection,
+  title: string,
+) => {
+  return tableSection.data.find((subSection) => subSection.title === title);
+};
+
+const findTableSection = (
+  sections: TransactionSection[] | undefined,
+  sectionTitle: string,
+): TransactionTableSection | undefined => {
+  return sections?.find(
+    (section): section is TransactionTableSection =>
+      'title' in section &&
+      section.title === sectionTitle &&
+      section.type === 'table',
+  );
+};
+
+const findHeaderSection = (
+  sections: TransactionSection[] | undefined,
+): TransactionHeaderSection | undefined => {
+  return sections?.find(
+    (section): section is TransactionHeaderSection =>
+      'title' in section && section.type === 'header',
+  );
+};
+
+const extractIsinFromHeader = (
+  sections: TransactionSection[] | undefined,
+): string => {
+  const headerSection = findHeaderSection(sections);
+  if (!headerSection?.data?.icon) {
+    throw new Error('Missing icon in header section');
+  }
+  return extractIsinFromIcon(headerSection.data.icon);
+};
+
+const parseToBigNumber = (value: string | undefined): BigNumber => {
+  if (!value) return new BigNumber(0);
+
+  // Extract all digits, commas, and dots
+  const numericMatch = value.match(/[\d.,]+/);
+
+  if (!numericMatch) {
+    return new BigNumber(0);
+  }
+
+  // Remove all commas (thousands separators) and keep dots (decimal separators)
+  const sanitizedValue = numericMatch[0].replace(/,/g, '');
+
+  return new BigNumber(sanitizedValue);
+};
+
+const handleDividend = (transaction: Transaction): DividendTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -90,7 +153,7 @@ export const handleDividend = (
   };
 };
 
-export const handleStockGift = (
+const handleStockGift = (
   transaction: Transaction,
   sectionTitle: string,
 ): OrderTransaction => {
@@ -141,9 +204,7 @@ export const handleStockGift = (
   };
 };
 
-export const handleTradeTransaction = (
-  transaction: Transaction,
-): PortfolioData => {
+const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
   const date = extractDate(transaction.timestamp);
   const type = identifyBuyOrSell(transaction);
   const isin = extractIsinFromIcon(transaction.icon);
@@ -270,7 +331,7 @@ export const handleTradeTransaction = (
   return result;
 };
 
-export const handleInterest = (transaction: Transaction): CashTransaction => {
+const handleInterest = (transaction: Transaction): CashTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -306,9 +367,7 @@ export const handleInterest = (transaction: Transaction): CashTransaction => {
   };
 };
 
-export const handleTaxCorrection = (
-  transaction: Transaction,
-): CashTransaction => {
+const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -332,4 +391,81 @@ export const handleTaxCorrection = (
     feeTax: '0',
     feeCurrency: DEFAULT_FEE_CURRENCY,
   };
+};
+
+export const mapTransactionsToPortfolioData = (
+  transactions: Transaction[],
+): PortfolioData => {
+  if (!transactions?.length) {
+    console.warn(
+      'No data provided to convert to PortfolioData. No file will be created.',
+    );
+    return [];
+  }
+
+  const portfolioData: PortfolioData = [];
+
+  for (const transaction of transactions) {
+    try {
+      // Skip cancelled transactions - they shouldn't be included in portfolio data
+      if (transaction.status === 'CANCELED') {
+        continue;
+      }
+
+      // Skip transactions without eventType (shouldn't happen with current identifyEventType, but kept as safety net)
+      if (!transaction.eventType) {
+        console.warn(
+          `Transaction without eventType skipped: ${transaction.title} | ${transaction.subtitle}`,
+        );
+        continue;
+      }
+
+      // Route to appropriate handler based on event type
+      switch (transaction.eventType) {
+        case TRANSACTION_EVENT_TYPE.DIVIDEND:
+          portfolioData.push(handleDividend(transaction));
+          break;
+
+        case TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT:
+          portfolioData.push(
+            handleStockGift(transaction, SECTION_TITLE_TRANSACTION),
+          );
+          break;
+
+        case TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT:
+        case TRANSACTION_EVENT_TYPE.RECEIVED_GIFT:
+          portfolioData.push(
+            handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
+          );
+          break;
+
+        case TRANSACTION_EVENT_TYPE.TRADE:
+        case TRANSACTION_EVENT_TYPE.SAVINGS_PLAN:
+        case TRANSACTION_EVENT_TYPE.ROUNDUP:
+        case TRANSACTION_EVENT_TYPE.CASHBACK:
+          portfolioData.push(...handleTradeTransaction(transaction));
+          break;
+
+        case TRANSACTION_EVENT_TYPE.INTEREST:
+          portfolioData.push(handleInterest(transaction));
+          break;
+
+        case TRANSACTION_EVENT_TYPE.TAX_CORRECTION:
+          portfolioData.push(handleTaxCorrection(transaction));
+          break;
+
+        default:
+          // Unhandled event types are silently ignored
+          break;
+      }
+    } catch (error) {
+      console.error(
+        `Error processing transaction ${transaction.id} (${transaction.title}):`,
+        error instanceof Error ? error.message : String(error),
+      );
+      // Continue processing other transactions even if one fails
+    }
+  }
+
+  return portfolioData;
 };
