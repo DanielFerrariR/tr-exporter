@@ -1,23 +1,22 @@
 import fs from 'fs';
 import inquirer from 'inquirer';
 import { PortfolioData, Transaction } from '@/types';
-import {
-  findAllAccountNumbers,
-  getPortfolioDataPath,
-  getTransactionsPath,
-} from './utils';
 
-// Account number will be set after downloading transactions
-let accountNumber: string | null = null;
-
-// Get account number: use stored value, or find from build folder
-// If multiple exist, prompt user to choose
-export const getAccountNumber = async (): Promise<string | null> => {
-  // Use stored account number if available
-  if (accountNumber) {
-    return accountNumber;
+// Find all account numbers by scanning build folder
+const findAllAccountNumbers = (): string[] => {
+  if (!fs.existsSync('build')) {
+    return [];
   }
 
+  const entries = fs.readdirSync('build', { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+};
+
+// Get account number from build folder
+// If multiple exist, prompt user to choose
+const getAccountNumber = async (): Promise<string | null> => {
   // Find all account numbers in build folder
   const accountNumbers = findAllAccountNumbers();
 
@@ -46,10 +45,6 @@ export const getAccountNumber = async (): Promise<string | null> => {
   return selectedAccountNumber;
 };
 
-export const setAccountNumber = (accountNum: string): void => {
-  accountNumber = accountNum;
-};
-
 export const loadTransactions = async (): Promise<{
   transactions: Transaction[];
   accountNum: string;
@@ -65,7 +60,7 @@ export const loadTransactions = async (): Promise<{
     return null;
   }
 
-  const transactionsPath = getTransactionsPath(accountNum);
+  const transactionsPath = `build/${accountNum}/transactions.json`;
   if (!fs.existsSync(transactionsPath)) {
     console.error(`Error: ${transactionsPath} not found.`);
     console.error(
@@ -99,7 +94,7 @@ export const loadPortfolioData = async (): Promise<{
     return null;
   }
 
-  const portfolioDataPath = getPortfolioDataPath(accountNum);
+  const portfolioDataPath = `build/${accountNum}/portfolioData.json`;
   if (!fs.existsSync(portfolioDataPath)) {
     console.error(`Error: ${portfolioDataPath} not found.`);
     console.error(

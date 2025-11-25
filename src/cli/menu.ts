@@ -7,11 +7,7 @@ import {
   saveFile,
 } from '@/utils';
 import { login } from '@/cli/login';
-import {
-  loadPortfolioData,
-  loadTransactions,
-  setAccountNumber,
-} from '@/cli/helpers';
+import { loadPortfolioData, loadTransactions } from '@/cli/helpers';
 
 const MENU_OPTIONS = {
   DOWNLOAD_TRANSACTIONS: 'downloadTransactions',
@@ -28,9 +24,7 @@ const handleDownloadTransactions = async (): Promise<void> => {
       console.error('Login failed. Please try again.');
       return;
     }
-    const result = await downloadTransactions();
-    // Store the account number for later use
-    setAccountNumber(result.accountInformation.accountNumber);
+    await downloadTransactions();
     console.log('Transactions downloaded successfully.');
   } catch (error) {
     console.error('Error downloading transactions:', error);
