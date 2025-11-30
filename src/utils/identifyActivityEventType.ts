@@ -26,7 +26,7 @@ export const identifyActivityEventType = (
   }
 
   // Title Exchange
-  if (activity.subtitle === 'Title Exchange') {
+  if (activity.subtitle === 'Title exchange') {
     return ACTIVITY_EVENT_TYPE.TITLE_EXCHANGE;
   }
 
