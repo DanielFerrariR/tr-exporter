@@ -351,9 +351,7 @@ const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
 
   return {
     title: transaction.title,
-    eventType: transaction.eventType as
-      | TRANSACTION_EVENT_TYPE.TAX
-      | TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
     type,
     date,
     amount,

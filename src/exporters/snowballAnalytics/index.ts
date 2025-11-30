@@ -12,6 +12,8 @@ import { getExchangeFromIsin, parseToBigNumber } from '@/utils';
 
 const FILE_NAME = 'snowballTransactions.csv';
 const EVENT_TYPE_DIVIDEND = 'Dividend';
+const EVENT_TYPE_BUY = 'Buy';
+const EVENT_TYPE_SELL = 'Sell';
 const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
 const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
 const EVENT_TYPE_SPLIT = 'Split';
@@ -100,7 +102,8 @@ export const handleOrderTransaction = async (
 
   const rows: CsvRowData[] = [
     {
-      event: item.type,
+      event:
+        item.type === TRANSACTION_TYPE.BUY ? EVENT_TYPE_BUY : EVENT_TYPE_SELL,
       date: item.date,
       symbol: item.isin,
       exchange,
@@ -217,7 +220,6 @@ export const convertItemToCsvRow = async (
     // Cash Gain and Cash Expense
     if (
       item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
-      item.eventType === TRANSACTION_EVENT_TYPE.TAX ||
       item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
     ) {
       const row = handleCashTransaction(item);
