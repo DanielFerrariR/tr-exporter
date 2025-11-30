@@ -6,6 +6,7 @@ export enum TRANSACTION_EVENT_TYPE {
   INTEREST = 'Interest', // interest
   TRADE = 'Trade', // trade (buy/sell)
   DIVIDEND = 'Dividend', // dividend
+  TAX = 'Tax', // tax
   TAX_CORRECTION = 'Tax Correction', // tax correction
   RECEIVED_GIFT = 'Received Gift', // Received stock gifts from a friend (received gifts aren't included in transactions list and are added later from activities)
   WELCOME_STOCK_GIFT = 'Welcome Stock Gift', // Welcome stock gifts when opening an account

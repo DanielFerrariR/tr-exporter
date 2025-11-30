@@ -18,6 +18,7 @@ const EVENT_TYPE_SPLIT = 'Split';
 const DEFAULT_PRICE_FOR_CASH = '1';
 const EMPTY_STRING = '';
 const DEFAULT_EXCHANGE = 'LS-X';
+const DEFAULT_CURRENCY = 'EUR';
 
 export const HEADERS = [
   'Event',
@@ -82,8 +83,8 @@ export const handleDividend = async (
     quantity: item.dividendTotal,
     price: item.dividendPerShare,
     currency: item.currency,
-    feeTax: item.feeTax,
-    feeCurrency: item.feeCurrency,
+    feeTax: item.tax,
+    feeCurrency: item.taxCurrency,
     doNotAdjustCash: EMPTY_STRING,
   };
 };
@@ -106,7 +107,7 @@ export const handleOrderTransaction = async (
     quantity: item.quantity,
     price: item.price,
     currency: item.currency,
-    feeTax: item.feeTax,
+    feeTax: item.fee,
     feeCurrency: item.feeCurrency,
     doNotAdjustCash: EMPTY_STRING,
   };
@@ -127,8 +128,8 @@ export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
     quantity: item.amount,
     price: DEFAULT_PRICE_FOR_CASH,
     currency: item.currency,
-    feeTax: item.feeTax,
-    feeCurrency: item.feeCurrency,
+    feeTax: item.tax,
+    feeCurrency: item.taxCurrency,
     doNotAdjustCash: EMPTY_STRING,
   };
 };
@@ -144,7 +145,7 @@ export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
     price: parseToBigNumber(item.creditedShares)
       .dividedBy(parseToBigNumber(item.debitedShares))
       .toFixed(),
-    currency: 'EUR', // Snowball requires currency for splits
+    currency: DEFAULT_CURRENCY, // Snowball requires currency for splits
     feeTax: EMPTY_STRING,
     feeCurrency: EMPTY_STRING,
     doNotAdjustCash: EMPTY_STRING,
@@ -176,7 +177,8 @@ export const convertItemToCsvRow = async (
     // Cash Gain and Cash Expense
     if (
       item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
-      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
+      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION ||
+      item.eventType === TRANSACTION_EVENT_TYPE.TAX
     ) {
       return handleCashTransaction(item);
     }
