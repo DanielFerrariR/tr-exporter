@@ -1,6 +1,6 @@
 import {
-  CashTransaction,
   DividendTransaction,
+  CashTransaction,
   OrderTransaction,
   PortfolioData,
   SplitTransaction,
@@ -82,54 +82,93 @@ export const handleDividend = async (
     note: item.title,
     quantity: item.dividendTotal,
     price: item.dividendPerShare,
-    currency: item.currency,
+    currency: DEFAULT_CURRENCY,
     feeTax: item.tax,
-    feeCurrency: item.taxCurrency,
+    feeCurrency: DEFAULT_CURRENCY,
     doNotAdjustCash: EMPTY_STRING,
   };
 };
 
 export const handleOrderTransaction = async (
   item: OrderTransaction,
-): Promise<CsvRowData> => {
+): Promise<CsvRowData[]> => {
   // If exchange is not the default exchange, use the exchange from the item
   const exchange =
     item.exchange !== DEFAULT_EXCHANGE
       ? item.exchange
       : await getExchangeFromIsin(item.isin);
 
-  return {
-    event: item.type,
-    date: item.date,
-    symbol: item.isin,
-    exchange,
-    note: item.title,
-    quantity: item.quantity,
-    price: item.price,
-    currency: item.currency,
-    feeTax: item.fee,
-    feeCurrency: item.feeCurrency,
-    doNotAdjustCash: EMPTY_STRING,
-  };
+  const rows: CsvRowData[] = [
+    {
+      event: item.type,
+      date: item.date,
+      symbol: item.isin,
+      exchange,
+      note: item.title,
+      quantity: item.quantity,
+      price: item.price,
+      currency: DEFAULT_CURRENCY,
+      feeTax: item.fee,
+      feeCurrency: DEFAULT_CURRENCY,
+      doNotAdjustCash: EMPTY_STRING,
+    },
+  ];
+
+  // Create tax transaction if tax exists and is non-zero
+  if (item.tax && parseToBigNumber(item.tax).isGreaterThan(0)) {
+    rows.push({
+      event: EVENT_TYPE_CASH_EXPENSE,
+      date: item.date,
+      symbol: EMPTY_STRING,
+      exchange: EMPTY_STRING,
+      note: `${item.title} - Tax`,
+      quantity: item.tax,
+      price: DEFAULT_PRICE_FOR_CASH,
+      currency: DEFAULT_CURRENCY,
+      feeTax: EMPTY_STRING,
+      feeCurrency: EMPTY_STRING,
+      doNotAdjustCash: EMPTY_STRING,
+    });
+  }
+
+  // Create tax correction transaction if taxCorrection exists and is non-zero
+  if (
+    item.taxCorrection &&
+    parseToBigNumber(item.taxCorrection).isGreaterThan(0)
+  ) {
+    rows.push({
+      event: EVENT_TYPE_CASH_GAIN,
+      date: item.date,
+      symbol: EMPTY_STRING,
+      exchange: EMPTY_STRING,
+      note: `${item.title} - Tax Correction`,
+      quantity: item.taxCorrection,
+      price: DEFAULT_PRICE_FOR_CASH,
+      currency: DEFAULT_CURRENCY,
+      feeTax: EMPTY_STRING,
+      feeCurrency: EMPTY_STRING,
+      doNotAdjustCash: EMPTY_STRING,
+    });
+  }
+
+  return rows;
 };
 
 export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
-  const event =
-    item.type === TRANSACTION_TYPE.CASH_GAIN
-      ? EVENT_TYPE_CASH_GAIN
-      : EVENT_TYPE_CASH_EXPENSE;
-
   return {
-    event,
+    event:
+      item.type === TRANSACTION_TYPE.CASH_GAIN
+        ? EVENT_TYPE_CASH_GAIN
+        : EVENT_TYPE_CASH_EXPENSE,
     date: item.date,
     symbol: EMPTY_STRING,
     exchange: EMPTY_STRING,
     note: item.title,
     quantity: item.amount,
     price: DEFAULT_PRICE_FOR_CASH,
-    currency: item.currency,
+    currency: DEFAULT_CURRENCY,
     feeTax: item.tax,
-    feeCurrency: item.taxCurrency,
+    feeCurrency: DEFAULT_CURRENCY,
     doNotAdjustCash: EMPTY_STRING,
   };
 };
@@ -154,11 +193,12 @@ export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
 
 export const convertItemToCsvRow = async (
   item: PortfolioData[0],
-): Promise<CsvRowData | null> => {
+): Promise<CsvRowData[] | null> => {
   try {
     // Dividends
     if (item.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
-      return await handleDividend(item);
+      const row = await handleDividend(item);
+      return [row];
     }
 
     // Buy and Sell transactions (trades, savings plans, roundups and 15 euros per month bonus)
@@ -177,15 +217,17 @@ export const convertItemToCsvRow = async (
     // Cash Gain and Cash Expense
     if (
       item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
-      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION ||
-      item.eventType === TRANSACTION_EVENT_TYPE.TAX
+      item.eventType === TRANSACTION_EVENT_TYPE.TAX ||
+      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
     ) {
-      return handleCashTransaction(item);
+      const row = handleCashTransaction(item);
+      return [row];
     }
 
     // Split
     if (item.eventType === TRANSACTION_EVENT_TYPE.SPLIT) {
-      return handleSplitTransaction(item);
+      const row = handleSplitTransaction(item);
+      return [row];
     }
 
     // Unhandled event types are silently ignored
@@ -217,25 +259,29 @@ export const convertTransactionsToSnowballCsv = async (
   const csvRowPromises = data.map(convertItemToCsvRow);
   const csvRowResults = await Promise.all(csvRowPromises);
 
-  // Filter out null results and empty rows, then convert to CSV format
+  // Filter out null results, flatten arrays, and filter empty rows, then convert to CSV format
   const csvRows: string[] = [HEADERS.join(',')];
 
-  for (const row of csvRowResults) {
-    if (row && !isRowEmpty(row)) {
-      const rowArray = [
-        row.event,
-        row.date,
-        row.symbol,
-        row.price,
-        row.quantity,
-        row.currency,
-        row.feeTax,
-        row.exchange,
-        row.feeCurrency,
-        row.doNotAdjustCash,
-        row.note,
-      ];
-      csvRows.push(createCsvRow(rowArray));
+  for (const rowArray of csvRowResults) {
+    if (rowArray) {
+      for (const row of rowArray) {
+        if (row && !isRowEmpty(row)) {
+          const fields = [
+            row.event,
+            row.date,
+            row.symbol,
+            row.price,
+            row.quantity,
+            row.currency,
+            row.feeTax,
+            row.exchange,
+            row.feeCurrency,
+            row.doNotAdjustCash,
+            row.note,
+          ];
+          csvRows.push(createCsvRow(fields));
+        }
+      }
     }
   }
 

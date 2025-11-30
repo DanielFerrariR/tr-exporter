@@ -25,7 +25,8 @@ export interface OrderTransaction {
   quantity: string;
   currency: string;
   fee: string;
-  feeCurrency: string;
+  tax: string;
+  taxCorrection: string;
   exchange: string;
 }
 
@@ -37,14 +38,13 @@ export interface DividendTransaction {
   isin: string;
   currency: string;
   tax: string;
-  taxCurrency: string;
   exchange: string;
   shares: string;
   dividendPerShare: string;
   dividendTotal: string;
 }
 
-// Cash Gain and Cash Loss
+// Cash Gain and Cash Expense
 export interface CashTransaction {
   title: string;
   eventType:
@@ -56,9 +56,9 @@ export interface CashTransaction {
   amount: string;
   currency: string;
   tax: string;
-  taxCurrency: string;
 }
 
+// Splits
 export interface SplitTransaction {
   title: string;
   eventType: TRANSACTION_EVENT_TYPE.SPLIT;

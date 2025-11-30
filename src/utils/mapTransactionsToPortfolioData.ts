@@ -1,7 +1,7 @@
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import {
-  CashTransaction,
   DividendTransaction,
+  CashTransaction,
   OrderTransaction,
   PortfolioData,
   SplitTransaction,
@@ -17,8 +17,6 @@ import { parseToBigNumber } from '@/utils/parseToBigNumber';
 
 const DEFAULT_EXCHANGE = 'LS-X';
 const DEFAULT_CURRENCY = 'EUR';
-const DEFAULT_FEE_CURRENCY = 'EUR';
-const DEFAULT_TAX_CURRENCY = 'EUR';
 const SECTION_TITLE_TRANSACTION = 'Transaction';
 const SECTION_TITLE_OVERVIEW = 'Overview';
 const SUBSECTION_TITLE_SHARES = 'Shares';
@@ -133,7 +131,6 @@ const handleDividend = (transaction: Transaction): DividendTransaction => {
     isin,
     currency: DEFAULT_CURRENCY,
     tax,
-    taxCurrency: DEFAULT_FEE_CURRENCY,
     exchange: DEFAULT_EXCHANGE,
     shares,
     dividendPerShare,
@@ -188,7 +185,8 @@ const handleStockGift = (
     currency: DEFAULT_CURRENCY,
     exchange: DEFAULT_EXCHANGE,
     fee: '0',
-    feeCurrency: DEFAULT_FEE_CURRENCY,
+    tax: '0',
+    taxCorrection: '0',
   };
 };
 
@@ -202,7 +200,7 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
   let quantity = '';
   let fee = '';
   let tax = '';
-  let taxCorrectionAmount = '';
+  let taxCorrection = '';
 
   // Try to find Transaction section first (newer format)
   const transactionSection = findTableSection(
@@ -234,15 +232,10 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
 
     quantity = parseToBigNumber(getDetailText(sharesSubSection)).toFixed();
     price = parseToBigNumber(getDetailText(sharePriceSubSection)).toFixed();
-
-    // Sell orders can have tax corrections, which will create a separate cash gain transaction
-    taxCorrectionAmount = parseToBigNumber(
+    taxCorrection = parseToBigNumber(
       getDetailText(taxCorrectionSubSection),
     ).toFixed();
-
-    // Sell orders can have tax, which will create a separate cash expense transaction
     tax = parseToBigNumber(getDetailText(taxSubSection)).toFixed();
-
     fee = parseToBigNumber(getDetailText(feeSubSection)).toFixed();
   } else {
     // Fallback to Overview section (older format)
@@ -273,15 +266,10 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
     quantity = parseToBigNumber(
       transactionSubSection?.detail?.displayValue?.prefix,
     ).toFixed();
-
-    // Sell orders can have tax corrections, which will create a separate cash gain transaction
-    taxCorrectionAmount = parseToBigNumber(
+    taxCorrection = parseToBigNumber(
       getDetailText(taxCorrectionSubSection),
     ).toFixed();
-
-    // Sell orders can have tax, which will create a separate cash expense transaction
     tax = parseToBigNumber(getDetailText(taxSubSection)).toFixed();
-
     fee = parseToBigNumber(getDetailText(feeSubSection)).toFixed();
   }
 
@@ -303,41 +291,12 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
     quantity,
     currency: DEFAULT_CURRENCY,
     fee,
-    feeCurrency: DEFAULT_FEE_CURRENCY,
+    tax,
+    taxCorrection,
     exchange: DEFAULT_EXCHANGE,
   };
 
   result.push(newTransaction);
-
-  // If there's a tax correction, create a separate cash gain transaction
-  if (parseToBigNumber(taxCorrectionAmount).isGreaterThan(0)) {
-    const taxCorrectionTransaction: CashTransaction = {
-      title: `${transaction.title} - Tax Correction`,
-      eventType: TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
-      type: TRANSACTION_TYPE.CASH_GAIN,
-      date,
-      amount: taxCorrectionAmount,
-      currency: DEFAULT_CURRENCY,
-      tax: '0',
-      taxCurrency: DEFAULT_TAX_CURRENCY,
-    };
-    result.push(taxCorrectionTransaction);
-  }
-
-  // If there's a tax, create a separate cash gain transaction
-  if (parseToBigNumber(tax).isGreaterThan(0)) {
-    const taxTransaction: CashTransaction = {
-      title: `${transaction.title} - Tax`,
-      eventType: TRANSACTION_EVENT_TYPE.TAX,
-      type: TRANSACTION_TYPE.CASH_EXPENSE,
-      date,
-      amount: tax,
-      currency: DEFAULT_CURRENCY,
-      tax: '0',
-      taxCurrency: DEFAULT_TAX_CURRENCY,
-    };
-    result.push(taxTransaction);
-  }
 
   return result;
 };
@@ -374,7 +333,6 @@ const handleInterest = (transaction: Transaction): CashTransaction => {
     amount,
     currency: DEFAULT_CURRENCY,
     tax,
-    taxCurrency: DEFAULT_TAX_CURRENCY,
   };
 };
 
@@ -384,23 +342,23 @@ const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
   }
   const date = extractDate(transaction.timestamp);
   const amount = parseToBigNumber(
-    Math.abs(transaction.amount?.value ?? 0).toString(),
+    transaction.amount?.value.toString(),
   ).toFixed();
-  const type = parseToBigNumber(
-    transaction.amount?.value?.toString(),
-  ).isGreaterThan(0)
-    ? TRANSACTION_TYPE.CASH_GAIN
-    : TRANSACTION_TYPE.CASH_EXPENSE;
+  const type =
+    transaction.amount?.value && transaction.amount.value > 0
+      ? TRANSACTION_TYPE.CASH_GAIN
+      : TRANSACTION_TYPE.CASH_EXPENSE;
 
   return {
     title: transaction.title,
-    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+    eventType: transaction.eventType as
+      | TRANSACTION_EVENT_TYPE.TAX
+      | TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
     type,
     date,
     amount,
     currency: DEFAULT_CURRENCY,
     tax: '0',
-    taxCurrency: DEFAULT_TAX_CURRENCY,
   };
 };
 
