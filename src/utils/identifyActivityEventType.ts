@@ -16,7 +16,7 @@ export const identifyActivityEventType = (
   }
 
   // Give Away Gift
-  if (activity.title === 'Give-away' && activity.subtitle === 'Redeemed') {
+  if (activity.title === 'Giveaway' && activity.subtitle === 'Redeemed') {
     return ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT;
   }
 

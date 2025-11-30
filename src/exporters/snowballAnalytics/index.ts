@@ -144,7 +144,7 @@ export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
     price: parseToBigNumber(item.creditedShares)
       .dividedBy(parseToBigNumber(item.debitedShares))
       .toFixed(),
-    currency: EMPTY_STRING,
+    currency: 'EUR', // Snowball requires currency for splits
     feeTax: EMPTY_STRING,
     feeCurrency: EMPTY_STRING,
     doNotAdjustCash: EMPTY_STRING,
