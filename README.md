@@ -55,6 +55,27 @@ When you run `pnpm start`, you'll see an interactive menu with the following opt
 - Convert transactions to portfolio data (regenerate portfolio data from existing transactions.json)
 - Convert portfolio data to export formats (please request support for unsupported trackers):
   - Snowball Analytics
+    - You can create a `customHoldings.json` file with the same format as `portfolioData` in `build/{accountNumber}/customHoldings.json` and it will be included in portfolio data during CSV generation. This is useful for things like crypto transactions outside of Trade Republic.
+
+      Example:
+
+      ```json
+      [
+        {
+          "title": "Bitcoin",
+          "date": "2025-10-30",
+          "eventType": "Trade",
+          "type": "Buy",
+          "isin": "BITCOIN",
+          "price": "92887.90",
+          "quantity": "0.0005383",
+          "currency": "EUR",
+          "feeTax": "0.125",
+          "exchange": "CUSTOM_HOLDING",
+          "feeCurrency": "EUR"
+        }
+      ]
+      ```
 
 ## Installation & Setup
 

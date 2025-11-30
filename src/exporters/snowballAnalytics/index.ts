@@ -10,13 +10,14 @@ import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import { getExchangeFromIsin, parseToBigNumber } from '@/utils';
 
-export const FILE_NAME = 'snowballTransactions.csv';
-export const EVENT_TYPE_DIVIDEND = 'Dividend';
-export const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
-export const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
-export const EVENT_TYPE_SPLIT = 'Split';
-export const DEFAULT_PRICE_FOR_CASH = '1';
-export const EMPTY_STRING = '';
+const FILE_NAME = 'snowballTransactions.csv';
+const EVENT_TYPE_DIVIDEND = 'Dividend';
+const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
+const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
+const EVENT_TYPE_SPLIT = 'Split';
+const DEFAULT_PRICE_FOR_CASH = '1';
+const EMPTY_STRING = '';
+const DEFAULT_EXCHANGE = 'LS-X';
 
 export const HEADERS = [
   'Event',
@@ -66,7 +67,11 @@ export const isRowEmpty = (row: CsvRowData): boolean => {
 export const handleDividend = async (
   item: DividendTransaction,
 ): Promise<CsvRowData> => {
-  const exchange = await getExchangeFromIsin(item.isin);
+  // If exchange is not the default exchange, use the exchange from the item
+  const exchange =
+    item.exchange !== DEFAULT_EXCHANGE
+      ? item.exchange
+      : await getExchangeFromIsin(item.isin);
 
   return {
     event: EVENT_TYPE_DIVIDEND,
@@ -86,7 +91,11 @@ export const handleDividend = async (
 export const handleOrderTransaction = async (
   item: OrderTransaction,
 ): Promise<CsvRowData> => {
-  const exchange = await getExchangeFromIsin(item.isin);
+  // If exchange is not the default exchange, use the exchange from the item
+  const exchange =
+    item.exchange !== DEFAULT_EXCHANGE
+      ? item.exchange
+      : await getExchangeFromIsin(item.isin);
 
   return {
     event: item.type,

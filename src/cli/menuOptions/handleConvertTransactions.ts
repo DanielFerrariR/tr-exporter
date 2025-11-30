@@ -29,7 +29,6 @@ const loadPortfolioData = async (): Promise<{
   }
 
   try {
-    console.log(`Reading portfolio data from ${portfolioDataPath}...`);
     const portfolioData = JSON.parse(
       fs.readFileSync(portfolioDataPath, 'utf8'),
     );
@@ -40,9 +39,46 @@ const loadPortfolioData = async (): Promise<{
   }
 };
 
+const loadCustomHoldings = async (): Promise<{
+  customHoldings: PortfolioData;
+  accountNumber: string;
+} | null> => {
+  const accountNumber = await getAccountNumber();
+
+  if (!accountNumber) {
+    console.error('Error: Account number not found.');
+    console.error(
+      'Please download transactions first using option 1 before converting.',
+    );
+    return null;
+  }
+
+  const customHoldingsPath = `build/${accountNumber}/customHoldings.json`;
+  if (!fs.existsSync(customHoldingsPath)) {
+    console.error(`Error: ${customHoldingsPath} not found.`);
+    return null;
+  }
+
+  try {
+    const customHoldings = JSON.parse(
+      fs.readFileSync(customHoldingsPath, 'utf8'),
+    );
+    return { customHoldings, accountNumber };
+  } catch (error: unknown) {
+    // Ignore file not found errors (file doesn't exist)
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return null;
+    }
+    // Throw error if file exists but parsing fails
+    console.error(`Error reading ${customHoldingsPath}:`, error);
+    throw error;
+  }
+};
+
 export const handleConvertTransactions = async (): Promise<void> => {
   try {
     const result = await loadPortfolioData();
+    const customHoldingsResult = await loadCustomHoldings();
     if (!result) return;
 
     const { portfolioData, accountNumber } = result;
@@ -74,7 +110,10 @@ export const handleConvertTransactions = async (): Promise<void> => {
       return;
     }
 
-    await exporter.convert(portfolioData, accountNumber);
+    await exporter.convert(
+      [...portfolioData, ...(customHoldingsResult?.customHoldings ?? [])],
+      accountNumber,
+    );
     console.log(`Conversion to ${exporter.name} completed successfully.`);
   } catch (error: unknown) {
     // Handle Ctrl+C (SIGINT) gracefully
