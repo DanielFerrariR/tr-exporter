@@ -3,16 +3,18 @@ import {
   DividendTransaction,
   OrderTransaction,
   PortfolioData,
+  SplitTransaction,
   TRANSACTION_TYPE,
 } from '@/types';
 import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
-import { getExchangeFromIsin } from '@/utils';
+import { getExchangeFromIsin, parseToBigNumber } from '@/utils';
 
 export const FILE_NAME = 'snowballTransactions.csv';
 export const EVENT_TYPE_DIVIDEND = 'Dividend';
 export const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
 export const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
+export const EVENT_TYPE_SPLIT = 'Split';
 export const DEFAULT_PRICE_FOR_CASH = '1';
 export const EMPTY_STRING = '';
 
@@ -110,14 +112,32 @@ export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
   return {
     event,
     date: item.date,
-    symbol: EMPTY_STRING, // Cash transactions don't have ISIN
-    exchange: EMPTY_STRING, // Cash transactions don't have exchange
+    symbol: EMPTY_STRING,
+    exchange: EMPTY_STRING,
     note: item.title,
-    quantity: item.amount, // Cash transactions use amount, not quantity
+    quantity: item.amount,
     price: DEFAULT_PRICE_FOR_CASH,
     currency: item.currency,
     feeTax: item.feeTax,
     feeCurrency: item.feeCurrency,
+    doNotAdjustCash: EMPTY_STRING,
+  };
+};
+
+export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
+  return {
+    event: EVENT_TYPE_SPLIT,
+    date: item.date,
+    symbol: item.isin,
+    exchange: EMPTY_STRING,
+    note: item.title,
+    quantity: item.creditedShares,
+    price: parseToBigNumber(item.creditedShares)
+      .dividedBy(parseToBigNumber(item.debitedShares))
+      .toFixed(),
+    currency: EMPTY_STRING,
+    feeTax: EMPTY_STRING,
+    feeCurrency: EMPTY_STRING,
     doNotAdjustCash: EMPTY_STRING,
   };
 };
@@ -150,6 +170,11 @@ export const convertItemToCsvRow = async (
       item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
     ) {
       return handleCashTransaction(item);
+    }
+
+    // Split
+    if (item.eventType === TRANSACTION_EVENT_TYPE.SPLIT) {
+      return handleSplitTransaction(item);
     }
 
     // Unhandled event types are silently ignored

@@ -8,6 +8,8 @@ export enum ACTIVITY_EVENT_TYPE {
   LIMIT_ORDER_CANCELED = 'Limit Order Canceled', // Cancelled limit buy/sell orders
   ORDER_REJECTED = 'Order Rejected', // Rejected buy/sell orders
   SECURITY_CHANGE = 'Security Change', // Changes to securities (e.g., ETF changes)
+  REVERSE_SPLIT = 'Reverse Split', // Reverse split
+  TITLE_EXCHANGE = 'Title Exchange', // Title exchange
 
   // Non-portfolio-related transactions
   // Legal Documents

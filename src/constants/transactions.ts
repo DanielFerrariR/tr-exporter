@@ -10,6 +10,7 @@ export enum TRANSACTION_EVENT_TYPE {
   RECEIVED_GIFT = 'Received Gift', // Received stock gifts from a friend (received gifts aren't included in transactions list and are added later from activities)
   WELCOME_STOCK_GIFT = 'Welcome Stock Gift', // Welcome stock gifts when opening an account
   GIVE_AWAY_GIFT = 'Give Away Gift', // Give away stock gifts from Trade Republic
+  SPLIT = 'SPLIT', // Can be a title exchange or a reverse split, which will remove and add shares to the account
   // Non-portfolio-related transactions
   SENT_GIFT = 'Sent Gift', // Sent stock gifts to a friend
   TRANSFER = 'Transfer', // Money transfers between accounts

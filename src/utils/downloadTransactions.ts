@@ -16,6 +16,7 @@ import { CloseEvent, ErrorEvent } from 'ws';
 import { getGiftTransactions } from '@/utils/getGiftTransactions';
 import { identifyActivityEventType } from '@/utils/identifyActivityEventType';
 import { identifyTransactionEventType } from '@/utils/identifyTransactionEventType';
+import { getCorporateActionsTransactions } from '@/utils/getCorporateActionsTransactions';
 
 export const OUTPUT_DIRECTORY = 'build';
 export const TRANSACTIONS_FILE_NAME = 'transactions.json';
@@ -155,7 +156,14 @@ export const downloadTransactions = async (): Promise<{
             // Adding received gift transactions from activities as transactions list doesn't include received gifts
             const giftTransactions: Transaction[] =
               getGiftTransactions(activities);
-            transactions.push(...giftTransactions);
+            // Adding corporate actions transactions from activities as transactions list doesn't include them
+            const corporateActionsTransactions: Transaction[] =
+              getCorporateActionsTransactions(activities);
+
+            transactions.push(
+              ...giftTransactions,
+              ...corporateActionsTransactions,
+            );
             transactions.sort(
               (transactionA, transactionB) =>
                 new Date(transactionB.timestamp).getTime() -

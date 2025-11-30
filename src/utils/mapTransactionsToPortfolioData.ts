@@ -4,6 +4,7 @@ import {
   DividendTransaction,
   OrderTransaction,
   PortfolioData,
+  SplitTransaction,
   Transaction,
   TRANSACTION_TYPE,
   TransactionDataObject,
@@ -12,7 +13,7 @@ import {
   TransactionTableSection,
 } from '@/types';
 import { identifyBuyOrSell } from '@/utils/identifyBuyOrSell';
-import { BigNumber } from 'bignumber.js';
+import { parseToBigNumber } from '@/utils/parseToBigNumber';
 
 const DEFAULT_EXCHANGE = 'LS-X';
 const DEFAULT_CURRENCY = 'EUR';
@@ -21,6 +22,8 @@ const SECTION_TITLE_TRANSACTION = 'Transaction';
 const SECTION_TITLE_OVERVIEW = 'Overview';
 const SUBSECTION_TITLE_SHARES = 'Shares';
 const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
+const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited Shares';
+const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited Shares';
 const SUBSECTION_TITLE_TAX = 'Tax';
 const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
 const SUBSECTION_TITLE_FEE = 'Fee';
@@ -78,22 +81,6 @@ const extractIsinFromHeader = (
     throw new Error('Missing icon in header section');
   }
   return extractIsinFromIcon(headerSection.data.icon);
-};
-
-const parseToBigNumber = (value: string | undefined): BigNumber => {
-  if (!value) return new BigNumber(0);
-
-  // Extract all digits, commas, and dots
-  const numericMatch = value.match(/[\d.,]+/);
-
-  if (!numericMatch) {
-    return new BigNumber(0);
-  }
-
-  // Remove all commas (thousands separators) and keep dots (decimal separators)
-  const sanitizedValue = numericMatch[0].replace(/,/g, '');
-
-  return new BigNumber(sanitizedValue);
 };
 
 const handleDividend = (transaction: Transaction): DividendTransaction => {
@@ -337,7 +324,7 @@ const handleInterest = (transaction: Transaction): CashTransaction => {
   }
   const date = extractDate(transaction.timestamp);
   const amount = parseToBigNumber(
-    transaction.amount.value.toString(),
+    transaction.amount?.value?.toString(),
   ).toFixed();
   let feeTax = '0';
 
@@ -373,10 +360,10 @@ const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
   }
   const date = extractDate(transaction.timestamp);
   const amount = parseToBigNumber(
-    Math.abs(transaction.amount.value).toString(),
+    Math.abs(transaction.amount?.value ?? 0).toString(),
   ).toFixed();
   const type = parseToBigNumber(
-    transaction.amount.value.toString(),
+    transaction.amount?.value?.toString(),
   ).isGreaterThan(0)
     ? TRANSACTION_TYPE.CASH_GAIN
     : TRANSACTION_TYPE.CASH_EXPENSE;
@@ -390,6 +377,44 @@ const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
     currency: DEFAULT_CURRENCY,
     feeTax: '0',
     feeCurrency: DEFAULT_FEE_CURRENCY,
+  };
+};
+
+const handleSplit = (transaction: Transaction): SplitTransaction => {
+  if (!transaction.eventType) {
+    throw new Error('Transaction eventType is required');
+  }
+  const date = extractDate(transaction.timestamp);
+  const isin = extractIsinFromIcon(transaction.icon);
+  const transactionSection = findTableSection(
+    transaction.sections,
+    SECTION_TITLE_TRANSACTION,
+  );
+
+  if (!transactionSection) {
+    throw new Error(
+      `Missing Transaction section in split: ${transaction.title}`,
+    );
+  }
+
+  const creditedShares = parseToBigNumber(
+    getDetailText(
+      findSubsection(transactionSection, SUBSECTION_TITLE_CREDITED_SHARES),
+    ),
+  ).toFixed();
+  const debitedShares = parseToBigNumber(
+    getDetailText(
+      findSubsection(transactionSection, SUBSECTION_TITLE_DEBITED_SHARES),
+    ),
+  ).toFixed();
+
+  return {
+    title: transaction.title,
+    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.SPLIT,
+    date,
+    isin,
+    creditedShares,
+    debitedShares,
   };
 };
 
@@ -452,6 +477,10 @@ export const mapTransactionsToPortfolioData = (
 
         case TRANSACTION_EVENT_TYPE.TAX_CORRECTION:
           portfolioData.push(handleTaxCorrection(transaction));
+          break;
+
+        case TRANSACTION_EVENT_TYPE.SPLIT:
+          portfolioData.push(handleSplit(transaction));
           break;
 
         default:

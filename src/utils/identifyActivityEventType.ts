@@ -20,6 +20,16 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT;
   }
 
+  // Reverse Split
+  if (activity.subtitle === 'Reverse Split') {
+    return ACTIVITY_EVENT_TYPE.REVERSE_SPLIT;
+  }
+
+  // Title Exchange
+  if (activity.subtitle === 'Title Exchange') {
+    return ACTIVITY_EVENT_TYPE.TITLE_EXCHANGE;
+  }
+
   // Non-portfolio-related transactions
   // Welcome Stock Gift Expired
   if (activity.title === 'Stock Perk' && activity.subtitle === 'Expired') {

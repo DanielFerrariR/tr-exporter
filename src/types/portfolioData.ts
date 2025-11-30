@@ -58,10 +58,20 @@ export interface CashTransaction {
   feeCurrency: string;
 }
 
+export interface SplitTransaction {
+  title: string;
+  eventType: TRANSACTION_EVENT_TYPE.SPLIT;
+  date: string;
+  isin: string;
+  creditedShares: string;
+  debitedShares: string;
+}
+
 // Not real Trade Republic types, just used for our internal purposes
 // Used to simplify the data needed to build a portfolio CSV
 export type PortfolioData = (
   | OrderTransaction
   | DividendTransaction
   | CashTransaction
+  | SplitTransaction
 )[];

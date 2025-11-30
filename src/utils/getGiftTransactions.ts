@@ -20,13 +20,7 @@ export const getGiftTransactions = (activities: Activity[]): Transaction[] =>
       icon: activity.icon,
       badge: null,
       subtitle: activity.subtitle,
-      // Only a placeholder value as the value only exists inside the transaction sections field
-      // Do not use the amount value for any calculations
-      amount: {
-        currency: 'EUR',
-        value: -1,
-        fractionDigits: 2,
-      },
+      amount: null,
       subAmount: null,
       status: 'EXECUTED',
       action: {

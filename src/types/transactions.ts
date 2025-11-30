@@ -151,7 +151,7 @@ export interface Transaction {
   icon: string;
   badge: unknown;
   subtitle: string | null;
-  amount: TransactionAmount;
+  amount: TransactionAmount | null; // Can be null for gifts and corporate actions which are custom transactions
   subAmount: unknown;
   status: 'EXECUTED' | 'CANCELED';
   action: TransactionAction;

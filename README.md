@@ -18,6 +18,7 @@ The following transaction types are fully supported and will be exported:
 - **Welcome Stock Gift** - Welcome stock gifts when opening an account
 - **Received Gift** - Received stock gifts from a friend
 - **Give Away Gift** - Received stock gifts from Trade Republic
+- **Corporate Actions** - Splits
 
 ## Not Supported Transactions
 
