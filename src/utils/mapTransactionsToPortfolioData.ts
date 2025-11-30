@@ -261,6 +261,10 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
       overviewSection,
       SECTION_TITLE_TRANSACTION,
     );
+    const taxCorrectionSubSection = findSubsection(
+      overviewSection,
+      SUBSECTION_TITLE_TAX_CORRECTION,
+    );
     const taxSubSection = findSubsection(overviewSection, SUBSECTION_TITLE_TAX);
     const feeSubSection = findSubsection(overviewSection, SUBSECTION_TITLE_FEE);
 
@@ -268,6 +272,11 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
     // In older format, quantity is in prefix
     quantity = parseToBigNumber(
       transactionSubSection?.detail?.displayValue?.prefix,
+    ).toFixed();
+
+    // Sell orders can have tax corrections, which will create a separate cash gain transaction
+    taxCorrectionAmount = parseToBigNumber(
+      getDetailText(taxCorrectionSubSection),
     ).toFixed();
 
     // Sell orders can have tax, which will create a separate cash expense transaction
