@@ -39,12 +39,12 @@ const loadPortfolioData = async (): Promise<{
   }
 };
 
-const loadCustomHoldings = async (): Promise<{
+const loadCustomHoldings = async (
+  accountNumber: string,
+): Promise<{
   customHoldings: PortfolioData;
   accountNumber: string;
 } | null> => {
-  const accountNumber = await getAccountNumber();
-
   if (!accountNumber) {
     console.error('Error: Account number not found.');
     console.error(
@@ -54,10 +54,6 @@ const loadCustomHoldings = async (): Promise<{
   }
 
   const customHoldingsPath = `build/${accountNumber}/customHoldings.json`;
-  if (!fs.existsSync(customHoldingsPath)) {
-    console.error(`Error: ${customHoldingsPath} not found.`);
-    return null;
-  }
 
   try {
     const customHoldings = JSON.parse(
@@ -78,10 +74,11 @@ const loadCustomHoldings = async (): Promise<{
 export const handleConvertTransactions = async (): Promise<void> => {
   try {
     const result = await loadPortfolioData();
-    const customHoldingsResult = await loadCustomHoldings();
     if (!result) return;
 
     const { portfolioData, accountNumber } = result;
+
+    const customHoldingsResult = await loadCustomHoldings(accountNumber);
 
     // Show available exporters
     const { exporterId } = await inquirer.prompt([
