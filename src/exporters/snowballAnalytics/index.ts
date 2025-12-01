@@ -10,18 +10,30 @@ import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import { getExchangeFromIsin, parseToBigNumber } from '@/utils';
 
+// Constants
+const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowballTransactions.csv';
+const DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES = '1';
+const DEFAULT_EXCHANGE = 'LS-X';
+const DEFAULT_CURRENCY = 'EUR';
+
+// Event types
 const EVENT_TYPE_DIVIDEND = 'Dividend';
 const EVENT_TYPE_BUY = 'Buy';
 const EVENT_TYPE_SELL = 'Sell';
 const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
 const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
 const EVENT_TYPE_SPLIT = 'Split';
-const DEFAULT_PRICE_FOR_CASH = '1';
-const EMPTY_STRING = '';
-const DEFAULT_EXCHANGE = 'LS-X';
-const DEFAULT_CURRENCY = 'EUR';
 
+// Type map
+const TYPE_MAP = {
+  [TRANSACTION_TYPE.BUY]: EVENT_TYPE_BUY,
+  [TRANSACTION_TYPE.SELL]: EVENT_TYPE_SELL,
+  [TRANSACTION_TYPE.CASH_GAIN]: EVENT_TYPE_CASH_GAIN,
+  [TRANSACTION_TYPE.CASH_EXPENSE]: EVENT_TYPE_CASH_EXPENSE,
+};
+
+// Headers
 export const HEADERS = [
   'Event',
   'Date',
@@ -45,7 +57,7 @@ export const escapeCsvField = (field: string): string => {
 };
 
 export const createCsvRow = (fields: string[]): string => {
-  return fields.map((field) => escapeCsvField(field ?? EMPTY_STRING)).join(',');
+  return fields.map((field) => escapeCsvField(field ?? '')).join(',');
 };
 
 // Transaction type handlers
@@ -87,7 +99,7 @@ export const handleDividend = async (
     currency: DEFAULT_CURRENCY,
     feeTax: item.tax,
     feeCurrency: DEFAULT_CURRENCY,
-    doNotAdjustCash: EMPTY_STRING,
+    doNotAdjustCash: '',
   };
 };
 
@@ -102,8 +114,7 @@ export const handleOrderTransaction = async (
 
   const rows: CsvRowData[] = [
     {
-      event:
-        item.type === TRANSACTION_TYPE.BUY ? EVENT_TYPE_BUY : EVENT_TYPE_SELL,
+      event: TYPE_MAP[item.type],
       date: item.date,
       symbol: item.isin,
       exchange,
@@ -113,7 +124,7 @@ export const handleOrderTransaction = async (
       currency: DEFAULT_CURRENCY,
       feeTax: item.fee,
       feeCurrency: DEFAULT_CURRENCY,
-      doNotAdjustCash: EMPTY_STRING,
+      doNotAdjustCash: '',
     },
   ];
 
@@ -122,15 +133,15 @@ export const handleOrderTransaction = async (
     rows.push({
       event: EVENT_TYPE_CASH_EXPENSE,
       date: item.date,
-      symbol: EMPTY_STRING,
-      exchange: EMPTY_STRING,
+      symbol: '',
+      exchange: '',
       note: `${item.title} - Tax`,
       quantity: item.tax,
-      price: DEFAULT_PRICE_FOR_CASH,
+      price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
       currency: DEFAULT_CURRENCY,
-      feeTax: EMPTY_STRING,
-      feeCurrency: EMPTY_STRING,
-      doNotAdjustCash: EMPTY_STRING,
+      feeTax: '',
+      feeCurrency: '',
+      doNotAdjustCash: '',
     });
   }
 
@@ -142,15 +153,15 @@ export const handleOrderTransaction = async (
     rows.push({
       event: EVENT_TYPE_CASH_GAIN,
       date: item.date,
-      symbol: EMPTY_STRING,
-      exchange: EMPTY_STRING,
+      symbol: '',
+      exchange: '',
       note: `${item.title} - Tax Correction`,
       quantity: item.taxCorrection,
-      price: DEFAULT_PRICE_FOR_CASH,
+      price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
       currency: DEFAULT_CURRENCY,
-      feeTax: EMPTY_STRING,
-      feeCurrency: EMPTY_STRING,
-      doNotAdjustCash: EMPTY_STRING,
+      feeTax: '',
+      feeCurrency: '',
+      doNotAdjustCash: '',
     });
   }
 
@@ -159,20 +170,17 @@ export const handleOrderTransaction = async (
 
 export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
   return {
-    event:
-      item.type === TRANSACTION_TYPE.CASH_GAIN
-        ? EVENT_TYPE_CASH_GAIN
-        : EVENT_TYPE_CASH_EXPENSE,
+    event: TYPE_MAP[item.type],
     date: item.date,
-    symbol: EMPTY_STRING,
-    exchange: EMPTY_STRING,
+    symbol: '',
+    exchange: '',
     note: item.title,
     quantity: item.amount,
-    price: DEFAULT_PRICE_FOR_CASH,
+    price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
     currency: DEFAULT_CURRENCY,
     feeTax: item.tax,
     feeCurrency: DEFAULT_CURRENCY,
-    doNotAdjustCash: EMPTY_STRING,
+    doNotAdjustCash: '',
   };
 };
 
@@ -181,16 +189,16 @@ export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
     event: EVENT_TYPE_SPLIT,
     date: item.date,
     symbol: item.isin,
-    exchange: EMPTY_STRING,
+    exchange: '',
     note: item.title,
     quantity: item.creditedShares,
     price: parseToBigNumber(item.creditedShares)
       .dividedBy(parseToBigNumber(item.debitedShares))
       .toFixed(),
-    currency: DEFAULT_CURRENCY, // Snowball requires currency for splits
-    feeTax: EMPTY_STRING,
-    feeCurrency: EMPTY_STRING,
-    doNotAdjustCash: EMPTY_STRING,
+    currency: DEFAULT_CURRENCY,
+    feeTax: '',
+    feeCurrency: '',
+    doNotAdjustCash: '',
   };
 };
 
@@ -288,5 +296,5 @@ export const convertTransactionsToSnowballCsv = async (
   }
 
   const csvString = csvRows.join('\n');
-  saveFile(csvString, FILE_NAME, `build/${accountNumber}`);
+  saveFile(csvString, FILE_NAME, `${OUTPUT_DIRECTORY}/${accountNumber}`);
 };
