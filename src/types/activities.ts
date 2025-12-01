@@ -12,7 +12,7 @@ export interface Activity {
   icon: string;
   subtitle: string | null;
   action: ActivityAction | null;
-  eventType?: ACTIVITY_EVENT_TYPE;
+  eventType?: ACTIVITY_EVENT_TYPE; // Added later to the activity
 }
 
 export interface ActivityPayload {
