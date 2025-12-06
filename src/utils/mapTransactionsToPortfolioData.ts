@@ -15,7 +15,7 @@ import {
 import { identifyBuyOrSell } from '@/utils/identifyBuyOrSell';
 import { parseToBigNumber } from '@/utils/parseToBigNumber';
 
-const DEFAULT_EXCHANGE = 'LS-X';
+const DEFAULT_EXCHANGE = 'LSX';
 const DEFAULT_CURRENCY = 'EUR';
 const SECTION_TITLE_TRANSACTION = 'Transaction';
 const SECTION_TITLE_OVERVIEW = 'Overview';

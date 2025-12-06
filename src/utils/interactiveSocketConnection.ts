@@ -25,7 +25,7 @@ export const interactiveSocketConnection = (): Promise<void> => {
         readline.cursorTo(process.stdout, 0);
         readlineInterface.prompt(true);
 
-        // Start keep-alive mechanism - send a message every 25 seconds
+        // Start keep-alive mechanism - send a message every 10 seconds
         keepAliveInterval = setInterval(() => {
           if (
             TradeRepublicAPI.getInstance().getConnectionStatus() ===
@@ -33,7 +33,7 @@ export const interactiveSocketConnection = (): Promise<void> => {
           ) {
             TradeRepublicAPI.getInstance().sendMessage('echo');
           }
-        }, 25000);
+        }, 10000);
       },
       onMessage: (message) => {
         // Ignore echo messages
