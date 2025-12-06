@@ -4,7 +4,7 @@ import { convertTransactionsToSnowballCsv } from './snowballAnalytics';
 export interface Exporter {
   id: string;
   name: string;
-  convert: (data: PortfolioData, accountNumber: string) => Promise<void>;
+  convert: (data: PortfolioData, phoneNumber: string) => Promise<void>;
 }
 
 // Registry of all available exporters

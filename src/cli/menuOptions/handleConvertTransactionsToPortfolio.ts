@@ -1,24 +1,21 @@
 import fs from 'fs';
 import { Transaction } from '@/types';
-import { getAccountNumber } from '@/utils/getAccountNumber';
 import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
 export const loadTransactions = async (): Promise<{
   transactions: Transaction[];
-  accountNumber: string;
+  phoneNumber: string;
 } | null> => {
-  // Get account number (with user selection if multiple exist)
-  const accountNumber = await getAccountNumber();
+  const phoneNumber = getPhoneNumber();
 
-  if (!accountNumber) {
-    console.error('Error: Account number not found.');
-    console.error(
-      'Please download transactions first using option 1 before converting.',
-    );
+  if (!phoneNumber) {
+    console.error('Error: Phone number not set.');
+    console.error('Please set your phone number first.');
     return null;
   }
 
-  const transactionsPath = `build/${accountNumber}/transactions.json`;
+  const transactionsPath = `build/${phoneNumber}/transactions.json`;
   if (!fs.existsSync(transactionsPath)) {
     console.error(`Error: ${transactionsPath} not found.`);
     console.error(
@@ -30,7 +27,7 @@ export const loadTransactions = async (): Promise<{
   try {
     console.log(`Reading transactions from ${transactionsPath}...`);
     const transactions = JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
-    return { transactions, accountNumber };
+    return { transactions, phoneNumber };
   } catch (error) {
     console.error(`Error reading ${transactionsPath}:`, error);
     return null;
@@ -42,7 +39,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     const result = await loadTransactions();
     if (!result) return;
 
-    const { transactions, accountNumber } = result;
+    const { transactions, phoneNumber } = result;
 
     console.log('Converting transactions to portfolio data...');
     const portfolioData = mapTransactionsToPortfolioData(transactions);
@@ -50,7 +47,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     saveFile(
       JSON.stringify(portfolioData, null, 2),
       'portfolioData.json',
-      `build/${accountNumber}`,
+      `build/${phoneNumber}`,
     );
     console.log('Portfolio data generated successfully.');
   } catch (error) {

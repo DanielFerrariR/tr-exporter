@@ -17,6 +17,7 @@ import { getGiftTransactions } from '@/utils/getGiftTransactions';
 import { identifyActivityEventType } from '@/utils/identifyActivityEventType';
 import { identifyTransactionEventType } from '@/utils/identifyTransactionEventType';
 import { getCorporateActionsTransactions } from '@/utils/getCorporateActionsTransactions';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
 export const OUTPUT_DIRECTORY = 'build';
 export const TRANSACTIONS_FILE_NAME = 'transactions.json';
@@ -31,6 +32,12 @@ export const downloadTransactions = async (): Promise<{
   accountInformation: AccountInformation;
 }> =>
   new Promise((resolve, reject) => {
+    const phoneNumber = getPhoneNumber();
+    if (!phoneNumber) {
+      reject(new Error('Phone number is not set. Please set it first.'));
+      return;
+    }
+
     const accountInformation: AccountInformation = {
       accountNumber: '',
       currencyId: 'EUR',
@@ -81,10 +88,12 @@ export const downloadTransactions = async (): Promise<{
             accountInformation.amount = cashResponse.amount;
 
             console.log('Account information fetched.');
+
+            // Save account information to phone number folder
             saveFile(
               JSON.stringify(accountInformation, null, 2),
               ACCOUNT_INFORMATION_FILE_NAME,
-              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
+              `${OUTPUT_DIRECTORY}/${phoneNumber}`,
             );
             TradeRepublicAPI.getInstance().sendSubscriptionMessage(
               SUBSCRIPTION_TYPES.ACTIVITIES,
@@ -121,7 +130,7 @@ export const downloadTransactions = async (): Promise<{
             saveFile(
               JSON.stringify(activities, null, 2),
               ACTIVITIES_FILE_NAME,
-              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
+              `${OUTPUT_DIRECTORY}/${phoneNumber}`,
             );
             TradeRepublicAPI.getInstance().sendSubscriptionMessage(
               SUBSCRIPTION_TYPES.TRANSACTIONS,
@@ -217,7 +226,7 @@ export const downloadTransactions = async (): Promise<{
             saveFile(
               JSON.stringify(transactions, null, 2),
               TRANSACTIONS_FILE_NAME,
-              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
+              `${OUTPUT_DIRECTORY}/${phoneNumber}`,
             );
 
             console.log('Generating portfolio data...');
@@ -227,7 +236,7 @@ export const downloadTransactions = async (): Promise<{
             saveFile(
               JSON.stringify(portfolioData, null, 2),
               PORTFOLIO_DATA_FILE_NAME,
-              `${OUTPUT_DIRECTORY}/${accountInformation.accountNumber}`,
+              `${OUTPUT_DIRECTORY}/${phoneNumber}`,
             );
 
             TradeRepublicAPI.getInstance().disconnect();

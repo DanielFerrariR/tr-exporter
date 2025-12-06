@@ -253,7 +253,7 @@ export const convertItemToCsvRow = async (
 
 export const convertTransactionsToSnowballCsv = async (
   data: PortfolioData,
-  accountNumber: string,
+  phoneNumber: string,
 ): Promise<void> => {
   if (!data?.length) {
     console.warn(
@@ -296,5 +296,5 @@ export const convertTransactionsToSnowballCsv = async (
   }
 
   const csvString = csvRows.join('\n');
-  saveFile(csvString, FILE_NAME, `${OUTPUT_DIRECTORY}/${accountNumber}`);
+  saveFile(csvString, FILE_NAME, `${OUTPUT_DIRECTORY}/${phoneNumber}`);
 };

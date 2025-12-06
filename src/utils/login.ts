@@ -4,12 +4,18 @@ import {
   TradeRepublicApiLoginError,
   TradeRepublicApiPinVerificationError,
 } from '@/types';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
 export async function login(): Promise<boolean> {
   console.log('Starting Trade Republic login process...');
-  const phoneNumber = readlineSync.question(
-    'Please enter your telephone number (with country code, e.g., +491234567890): ',
-  );
+
+  const phoneNumber = getPhoneNumber();
+  if (!phoneNumber) {
+    console.error('Error: Phone number is not set. Please set it first.');
+    return false;
+  }
+
+  console.log(`Using phone number: ${phoneNumber}`);
   const pin = readlineSync.question('Please enter your 4-digit PIN: ');
 
   let processId: string;

@@ -1,25 +1,22 @@
 import fs from 'fs';
 import { EXPORTERS, getExporterById } from '@/exporters';
 import { PortfolioData } from '@/types';
-import { getAccountNumber } from '@/utils';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 import inquirer from 'inquirer';
 
 const loadPortfolioData = async (): Promise<{
   portfolioData: PortfolioData;
-  accountNumber: string;
+  phoneNumber: string;
 } | null> => {
-  // Get account number (with user selection if multiple exist)
-  const accountNumber = await getAccountNumber();
+  const phoneNumber = getPhoneNumber();
 
-  if (!accountNumber) {
-    console.error('Error: Account number not found.');
-    console.error(
-      'Please download transactions first using option 1 before converting.',
-    );
+  if (!phoneNumber) {
+    console.error('Error: Phone number not set.');
+    console.error('Please set your phone number first.');
     return null;
   }
 
-  const portfolioDataPath = `build/${accountNumber}/portfolioData.json`;
+  const portfolioDataPath = `build/${phoneNumber}/portfolioData.json`;
   if (!fs.existsSync(portfolioDataPath)) {
     console.error(`Error: ${portfolioDataPath} not found.`);
     console.error(
@@ -32,7 +29,7 @@ const loadPortfolioData = async (): Promise<{
     const portfolioData = JSON.parse(
       fs.readFileSync(portfolioDataPath, 'utf8'),
     );
-    return { portfolioData, accountNumber };
+    return { portfolioData, phoneNumber };
   } catch (error) {
     console.error(`Error reading ${portfolioDataPath}:`, error);
     return null;
@@ -40,26 +37,24 @@ const loadPortfolioData = async (): Promise<{
 };
 
 const loadCustomHoldings = async (
-  accountNumber: string,
+  phoneNumber: string,
 ): Promise<{
   customHoldings: PortfolioData;
-  accountNumber: string;
+  phoneNumber: string;
 } | null> => {
-  if (!accountNumber) {
-    console.error('Error: Account number not found.');
-    console.error(
-      'Please download transactions first using option 1 before converting.',
-    );
+  if (!phoneNumber) {
+    console.error('Error: Phone number not set.');
+    console.error('Please set your phone number first.');
     return null;
   }
 
-  const customHoldingsPath = `build/${accountNumber}/customHoldings.json`;
+  const customHoldingsPath = `build/${phoneNumber}/customHoldings.json`;
 
   try {
     const customHoldings = JSON.parse(
       fs.readFileSync(customHoldingsPath, 'utf8'),
     );
-    return { customHoldings, accountNumber };
+    return { customHoldings, phoneNumber };
   } catch (error: unknown) {
     // Ignore file not found errors (file doesn't exist)
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
@@ -76,9 +71,9 @@ export const handleConvertTransactions = async (): Promise<void> => {
     const result = await loadPortfolioData();
     if (!result) return;
 
-    const { portfolioData, accountNumber } = result;
+    const { portfolioData, phoneNumber } = result;
 
-    const customHoldingsResult = await loadCustomHoldings(accountNumber);
+    const customHoldingsResult = await loadCustomHoldings(phoneNumber);
 
     // Show available exporters
     const { exporterId } = await inquirer.prompt([
@@ -109,7 +104,7 @@ export const handleConvertTransactions = async (): Promise<void> => {
 
     await exporter.convert(
       [...portfolioData, ...(customHoldingsResult?.customHoldings ?? [])],
-      accountNumber,
+      phoneNumber,
     );
     console.log(`Conversion to ${exporter.name} completed successfully.`);
   } catch (error: unknown) {

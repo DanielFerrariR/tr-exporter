@@ -32,7 +32,7 @@ The following transaction types are downloaded to `transactions.json` but are **
 
 ## CLI Options
 
-When you run `pnpm start`, you'll see an interactive menu with the following options:
+When you run `pnpm start`, you'll be prompted for your phone number (if not already set), and then you'll see an interactive menu with the following options:
 
 1. **Download Transactions** - Fetches all transactions from Trade Republic API and saves them to `build/transactions.json`
 2. **Convert Transactions to Portfolio Data** - Converts existing `build/transactions.json` to `build/portfolioData.json` (useful if you've updated transaction processing logic and want to regenerate portfolio data without refetching)
@@ -47,7 +47,10 @@ When you run `pnpm start`, you'll see an interactive menu with the following opt
 
    For additional commands, refer to the [pytr repository](https://github.com/pytr-org/pytr/blob/master/pytr/api.py).
 
-5. **Exit** - Exit the application
+5. **Change Phone Number** - Update your phone number used for authentication
+6. **Exit** - Exit the application
+
+**Note:** Your current phone number is displayed at the top of the menu each time it's shown.
 
 ## Features
 
