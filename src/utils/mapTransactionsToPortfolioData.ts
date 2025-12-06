@@ -122,7 +122,7 @@ const handleDividend = (transaction: Transaction): DividendTransaction => {
   // we need to calculate it with the total / shares
   const dividendPerShare = parseToBigNumber(dividendTotal)
     .dividedBy(parseToBigNumber(shares))
-    .toFixed(2);
+    .toFixed();
 
   return {
     title: transaction.title,
