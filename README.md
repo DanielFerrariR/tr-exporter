@@ -58,7 +58,7 @@ When you run `pnpm start`, you'll be prompted for your phone number (if not alre
 - Convert transactions to portfolio data (regenerate portfolio data from existing transactions.json)
 - Convert portfolio data to export formats (please request support for unsupported trackers):
   - Snowball Analytics
-    - You can create a `customHoldings.json` file with the same format as `portfolioData` in `build/{accountNumber}/customHoldings.json` and it will be included in portfolio data during CSV generation. This is useful for things like crypto transactions outside of Trade Republic.
+    - You can create a `customHoldings.json` file with the same format as `portfolioData` in `build/{phoneNumber}/customHoldings.json` and it will be included in portfolio data during CSV generation. This is useful for things like crypto transactions outside of Trade Republic.
 
       Example:
 
@@ -79,6 +79,8 @@ When you run `pnpm start`, you'll be prompted for your phone number (if not alre
         }
       ]
       ```
+
+    - After creation of snowballTransactions.csv, you can modify `remapIsins.json` to remap isins, currency and exchange that are shouldn't follow the current defaults. Please generate the csv again after changing `remapIsins.json`. The reason for this file is that isins can change after splits and Snowball Analytics doesn't cover all of them, so you need to use the most updated one that is findable in their search results. Additionally, you also need to modify this file for keeping the custom transactions (like crypto ones) using their own exchange and currency.
 
 ## Installation & Setup
 

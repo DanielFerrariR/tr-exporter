@@ -8,13 +8,16 @@ import {
 } from '@/types';
 import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
-import { getExchangeFromIsin, parseToBigNumber } from '@/utils';
+import {
+  getRemapFromIsin,
+  parseToBigNumber,
+  reloadRemapIsinsCache,
+} from '@/utils';
 
 // Constants
 const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowballTransactions.csv';
 const DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES = '1';
-const DEFAULT_EXCHANGE = 'LS-X';
 const DEFAULT_CURRENCY = 'EUR';
 
 // Event types
@@ -82,23 +85,24 @@ export const isRowEmpty = (row: CsvRowData): boolean => {
 export const handleDividend = async (
   item: DividendTransaction,
 ): Promise<CsvRowData> => {
-  // If exchange is not the default exchange, use the exchange from the item
-  const exchange =
-    item.exchange !== DEFAULT_EXCHANGE
-      ? item.exchange
-      : await getExchangeFromIsin(item.isin);
+  // Get remap data for this ISIN
+  const remap = await getRemapFromIsin(item.isin);
+
+  const exchange = remap.exchange;
+  const isin = remap.isin;
+  const currency = remap.currency;
 
   return {
     event: EVENT_TYPE_DIVIDEND,
     date: item.date,
-    symbol: item.isin,
+    symbol: isin,
     exchange,
     note: item.title,
     quantity: item.dividendTotal,
     price: item.dividendPerShare,
-    currency: DEFAULT_CURRENCY,
+    currency,
     feeTax: item.tax,
-    feeCurrency: DEFAULT_CURRENCY,
+    feeCurrency: currency,
     doNotAdjustCash: '',
   };
 };
@@ -106,24 +110,25 @@ export const handleDividend = async (
 export const handleOrderTransaction = async (
   item: OrderTransaction,
 ): Promise<CsvRowData[]> => {
-  // If exchange is not the default exchange, use the exchange from the item
-  const exchange =
-    item.exchange !== DEFAULT_EXCHANGE
-      ? item.exchange
-      : await getExchangeFromIsin(item.isin);
+  // Get remap data for this ISIN
+  const remap = await getRemapFromIsin(item.isin);
+
+  const exchange = remap.exchange;
+  const isin = remap.isin;
+  const currency = remap.currency;
 
   const rows: CsvRowData[] = [
     {
       event: TYPE_MAP[item.type],
       date: item.date,
-      symbol: item.isin,
+      symbol: isin,
       exchange,
       note: item.title,
       quantity: item.quantity,
       price: item.price,
-      currency: DEFAULT_CURRENCY,
+      currency,
       feeTax: item.fee,
-      feeCurrency: DEFAULT_CURRENCY,
+      feeCurrency: currency,
       doNotAdjustCash: '',
     },
   ];
@@ -138,7 +143,7 @@ export const handleOrderTransaction = async (
       note: `${item.title} - Tax`,
       quantity: item.tax,
       price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
-      currency: DEFAULT_CURRENCY,
+      currency,
       feeTax: '',
       feeCurrency: '',
       doNotAdjustCash: '',
@@ -158,7 +163,7 @@ export const handleOrderTransaction = async (
       note: `${item.title} - Tax Correction`,
       quantity: item.taxCorrection,
       price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
-      currency: DEFAULT_CURRENCY,
+      currency,
       feeTax: '',
       feeCurrency: '',
       doNotAdjustCash: '',
@@ -184,18 +189,26 @@ export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
   };
 };
 
-export const handleSplitTransaction = (item: SplitTransaction): CsvRowData => {
+export const handleSplitTransaction = async (
+  item: SplitTransaction,
+): Promise<CsvRowData> => {
+  // Get remap data for this ISIN
+  const remap = await getRemapFromIsin(item.isin);
+
+  const isin = remap.isin;
+  const currency = remap.currency;
+
   return {
     event: EVENT_TYPE_SPLIT,
     date: item.date,
-    symbol: item.isin,
+    symbol: isin,
     exchange: '',
     note: item.title,
     quantity: item.creditedShares,
     price: parseToBigNumber(item.creditedShares)
       .dividedBy(parseToBigNumber(item.debitedShares))
       .toFixed(),
-    currency: DEFAULT_CURRENCY,
+    currency,
     feeTax: '',
     feeCurrency: '',
     doNotAdjustCash: '',
@@ -236,7 +249,7 @@ export const convertItemToCsvRow = async (
 
     // Split
     if (item.eventType === TRANSACTION_EVENT_TYPE.SPLIT) {
-      const row = handleSplitTransaction(item);
+      const row = await handleSplitTransaction(item);
       return [row];
     }
 
@@ -262,10 +275,13 @@ export const convertTransactionsToSnowballCsv = async (
     return;
   }
 
+  // Reload remapIsins.json to ensure we have the most up-to-date version
+  reloadRemapIsinsCache();
+
   console.log('Converting transactions to Snowball CSV format...');
 
   // Convert all items to CSV rows in parallel (where possible)
-  // Note: getExchangeFromIsin has internal caching, so parallel calls are efficient
+  // Note: getRemapFromIsin has internal caching, so parallel calls are efficient
   const csvRowPromises = data.map(convertItemToCsvRow);
   const csvRowResults = await Promise.all(csvRowPromises);
 

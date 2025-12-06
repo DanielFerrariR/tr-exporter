@@ -3,27 +3,43 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'node-html-parser';
 import { saveFile } from '@/utils/saveFile';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
-// Cache for the exchange for a given isin
-const isinToExchange: Record<string, string> = {};
+export interface IsinRemap {
+  isin: string;
+  currency: string;
+  exchange: string;
+}
 
-const CACHE_FILE_PATH = path.join(
-  process.cwd(),
-  'build',
-  'isinToExchange.json',
-);
+// Cache for ISIN remapping
+const remapIsins: Record<string, IsinRemap> = {};
+let cacheLoaded = false;
+
+// Get cache file path based on phone number
+const getCacheFilePath = (): string | null => {
+  const phoneNumber = getPhoneNumber();
+  if (!phoneNumber) {
+    return null;
+  }
+  return path.join(process.cwd(), 'build', phoneNumber, 'remapIsins.json');
+};
 
 // Load cache from file if it exists
 const loadCache = (): void => {
+  const cacheFilePath = getCacheFilePath();
+  if (!cacheFilePath) {
+    return;
+  }
+
   try {
-    if (fs.existsSync(CACHE_FILE_PATH)) {
-      const cacheData = fs.readFileSync(CACHE_FILE_PATH, 'utf8');
+    if (fs.existsSync(cacheFilePath)) {
+      const cacheData = fs.readFileSync(cacheFilePath, 'utf8');
       const loadedCache = JSON.parse(cacheData);
-      Object.assign(isinToExchange, loadedCache);
+      Object.assign(remapIsins, loadedCache);
     }
   } catch (error) {
     console.warn(
-      `Failed to load ISIN cache from ${CACHE_FILE_PATH}:`,
+      `Failed to load ISIN remap cache from ${cacheFilePath}:`,
       error instanceof Error ? error.message : String(error),
     );
   }
@@ -31,22 +47,48 @@ const loadCache = (): void => {
 
 // Save cache to file
 const saveCache = (): void => {
+  const phoneNumber = getPhoneNumber();
+  if (!phoneNumber) {
+    return;
+  }
+
   saveFile(
-    JSON.stringify(isinToExchange, null, 2),
-    'isinToExchange.json',
-    'build',
+    JSON.stringify(remapIsins, null, 2),
+    'remapIsins.json',
+    `build/${phoneNumber}`,
     true,
   );
 };
 
-// Load cache on module initialization
-loadCache();
+// Export function to reload cache (useful when remapIsins.json is updated)
+export const reloadRemapIsinsCache = (): void => {
+  // Clear existing cache
+  Object.keys(remapIsins).forEach((key) => delete remapIsins[key]);
+  cacheLoaded = false;
+  // Reload from file
+  loadCache();
+  cacheLoaded = true;
+};
 
-// Get the exchange for a given isin
-// Needed for the case the portfolio tracker doesn't support Lang & Schwarz exchange
-// Using Xetra as the default and if the stock/etf isn't tradable in Xetra it will fallback to Frankfurt
-export const getExchangeFromIsin = async (isin: string) => {
-  if (isinToExchange[isin]) return isinToExchange[isin];
+// Get the remap data for a given isin
+// If the ISIN is not in the remap, it will be added with default values:
+// - isin: the ISIN itself
+// - currency: EUR
+// - exchange: XETRA if available, otherwise F
+export const getRemapFromIsin = async (isin: string): Promise<IsinRemap> => {
+  // Load cache if not already loaded
+  if (!cacheLoaded) {
+    loadCache();
+    cacheLoaded = true;
+  }
+
+  // If already in cache, return it
+  if (remapIsins[isin]) {
+    return remapIsins[isin];
+  }
+
+  // Determine exchange (try to get Xetra, fallback to F)
+  let exchange = 'F';
 
   // We don't know if its a etf or stock yet with just the isin, so we need to check both
   const [stockResponse, etfResponse] = await Promise.allSettled([
@@ -72,12 +114,19 @@ export const getExchangeFromIsin = async (isin: string) => {
     stockExchanges?.some((item) => item?.innerText.includes('Xetra')) ||
     etfExchanges?.some((item) => item?.innerText.includes('Xetra'))
   ) {
-    isinToExchange[isin] = 'XETRA';
-    saveCache();
-    return 'XETRA';
+    exchange = 'XETRA';
   }
 
-  isinToExchange[isin] = 'F';
+  // Create remap entry with defaults
+  const remap: IsinRemap = {
+    isin,
+    currency: 'EUR',
+    exchange,
+  };
+
+  // Add to cache and save
+  remapIsins[isin] = remap;
   saveCache();
-  return 'F';
+
+  return remap;
 };
