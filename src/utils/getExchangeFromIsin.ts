@@ -25,10 +25,11 @@ const getCacheFilePath = (): string | null => {
 };
 
 // Load cache from file if it exists
-const loadCache = (): void => {
+// Returns true if cache was successfully loaded (or attempted to load), false otherwise
+const loadCache = (): boolean => {
   const cacheFilePath = getCacheFilePath();
   if (!cacheFilePath) {
-    return;
+    return false;
   }
 
   try {
@@ -37,11 +38,13 @@ const loadCache = (): void => {
       const loadedCache = JSON.parse(cacheData);
       Object.assign(remapIsins, loadedCache);
     }
+    return true;
   } catch (error) {
     console.warn(
       `Failed to load ISIN remap cache from ${cacheFilePath}:`,
       error instanceof Error ? error.message : String(error),
     );
+    return false;
   }
 };
 
@@ -65,9 +68,8 @@ export const reloadRemapIsinsCache = (): void => {
   // Clear existing cache
   Object.keys(remapIsins).forEach((key) => delete remapIsins[key]);
   cacheLoaded = false;
-  // Reload from file
-  loadCache();
-  cacheLoaded = true;
+  // Reload from file - only set cacheLoaded to true if cache was actually loaded
+  cacheLoaded = loadCache();
 };
 
 // Get the remap data for a given isin
@@ -78,8 +80,7 @@ export const reloadRemapIsinsCache = (): void => {
 export const getRemapFromIsin = async (isin: string): Promise<IsinRemap> => {
   // Load cache if not already loaded
   if (!cacheLoaded) {
-    loadCache();
-    cacheLoaded = true;
+    cacheLoaded = loadCache();
   }
 
   // If already in cache, return it
