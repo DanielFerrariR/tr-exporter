@@ -80,7 +80,19 @@ When you run `pnpm start`, you'll be prompted for your phone number (if not alre
       ]
       ```
 
-    - After creation of snowballTransactions.csv, you can modify `remapIsins.json` to remap isins, currency and exchange that are shouldn't follow the current defaults. Please generate the csv again after changing `remapIsins.json`. The reason for this file is that isins can change after splits and Snowball Analytics doesn't cover all of them, so you need to use the most updated one that is findable in their search results. Additionally, you also need to modify this file for keeping the custom transactions (like crypto ones) using their own exchange and currency.
+    - After creation of snowballTransactions.csv, you can modify `build/{phoneNumber}/remapIsins.json` (automatically created after first run) to remap isins, currency and exchange that are shouldn't follow the current defaults. Please generate the csv again after changing `remapIsins.json`. The reason for this file is that isins can change after splits and Snowball Analytics doesn't cover all of them, so you need to use the most updated isin that is findable in their search results. Additionally, you also need to modify this file for keeping the custom transactions (like crypto ones) using their own exchange and currency.
+
+    Example:
+
+    ```json
+    [
+      {
+        "isin": "BITCOIN",
+        "currency": "EUR",
+        "exchange": "CUSTOM_HOLDING"
+      }
+    ]
+    ```
 
 ## Installation & Setup
 
