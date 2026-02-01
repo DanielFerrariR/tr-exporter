@@ -8,7 +8,8 @@
     "format": "prettier --write .",
     "check": "prettier --check .",
     "lint": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts",
-    "lint:fix": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts --fix"
+    "lint:fix": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts --fix",
+    "typecheck": "tsc --noEmit"
   },
   "license": "ISC",
   "devDependencies": {
@@ -37,7 +38,8 @@
   },
   "lint-staged": {
     "*.{js,ts,mts,cts}": [
-      "eslint --fix"
+      "eslint --fix",
+      "bash -c 'tsc --noEmit'"
     ],
     "*.{js,ts,mts,cts,json,md,yaml,yml,css,scss,html}": [
       "prettier --write"

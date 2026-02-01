@@ -11,6 +11,7 @@ export enum TRANSACTION_EVENT_TYPE {
   WELCOME_STOCK_GIFT = 'Welcome Stock Gift', // Welcome stock gifts when opening an account
   GIVE_AWAY_GIFT = 'Give Away Gift', // Give away stock gifts from Trade Republic
   SPLIT = 'Split', // Can be a title exchange or a reverse split, which will remove and add shares to the account
+
   // Non-portfolio-related transactions
   SENT_GIFT = 'Sent Gift', // Sent stock gifts to a friend
   TRANSFER = 'Transfer', // Money transfers between accounts

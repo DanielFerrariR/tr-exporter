@@ -10,6 +10,7 @@ export enum ACTIVITY_EVENT_TYPE {
   SECURITY_CHANGE = 'Security Change', // Changes to securities (e.g., ETF changes)
   STOCK_SPLIT = 'Stock Split', // Stock splits or reverse splits
   CORPORATE_ACTION = 'Corporate Action', // General corporate actions
+
   // Non-portfolio-related transactions
   ADDRESS_CHANGED = 'Address Changed', // Updates to the residential address
   CASH_ACCOUNT_CHANGED = 'Cash Account Changed', // Updates or changes to the internal cash account

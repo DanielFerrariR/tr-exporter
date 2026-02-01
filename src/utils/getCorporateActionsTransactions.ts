@@ -9,10 +9,7 @@ export const getCorporateActionsTransactions = (
     .filter(
       (activity) =>
         !!activity.eventType &&
-        [
-          ACTIVITY_EVENT_TYPE.REVERSE_SPLIT,
-          ACTIVITY_EVENT_TYPE.TITLE_EXCHANGE,
-        ].includes(activity.eventType),
+        [ACTIVITY_EVENT_TYPE.STOCK_SPLIT].includes(activity.eventType),
     )
     .map((activity) => ({
       id: activity.id,
