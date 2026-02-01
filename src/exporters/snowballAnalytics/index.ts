@@ -3,7 +3,7 @@ import {
   CashTransaction,
   OrderTransaction,
   PortfolioData,
-  SplitTransaction,
+  CorporateActionTransaction,
   TRANSACTION_TYPE,
 } from '@/types';
 import { saveFile } from '@/utils/saveFile';
@@ -190,7 +190,7 @@ export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
 };
 
 export const handleSplitTransaction = async (
-  item: SplitTransaction,
+  item: CorporateActionTransaction,
 ): Promise<CsvRowData> => {
   // Get remap data for this ISIN
   const remap = await getRemapFromIsin(item.isin);
@@ -248,7 +248,7 @@ export const convertItemToCsvRow = async (
     }
 
     // Split
-    if (item.eventType === TRANSACTION_EVENT_TYPE.SPLIT) {
+    if (item.eventType === TRANSACTION_EVENT_TYPE.CORPORATE_ACTION) {
       const row = await handleSplitTransaction(item);
       return [row];
     }

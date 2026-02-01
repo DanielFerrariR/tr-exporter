@@ -9,7 +9,7 @@ export const getCorporateActionsTransactions = (
     .filter(
       (activity) =>
         !!activity.eventType &&
-        [ACTIVITY_EVENT_TYPE.STOCK_SPLIT].includes(activity.eventType),
+        [ACTIVITY_EVENT_TYPE.CORPORATE_ACTION].includes(activity.eventType),
     )
     .map((activity) => ({
       id: activity.id,
@@ -25,7 +25,7 @@ export const getCorporateActionsTransactions = (
         type: 'timelineDetail',
         payload: activity.id,
       },
-      eventType: TRANSACTION_EVENT_TYPE.SPLIT,
+      eventType: TRANSACTION_EVENT_TYPE.CORPORATE_ACTION,
       cashAccountNumber: null,
       hidden: false,
       deleted: false,

@@ -57,10 +57,10 @@ export interface CashTransaction {
   tax: string;
 }
 
-// Splits
-export interface SplitTransaction {
+// Corporate Actions (Add or remove shares)
+export interface CorporateActionTransaction {
   title: string;
-  eventType: TRANSACTION_EVENT_TYPE.SPLIT;
+  eventType: TRANSACTION_EVENT_TYPE.CORPORATE_ACTION;
   date: string;
   isin: string;
   creditedShares: string;
@@ -73,5 +73,5 @@ export type PortfolioData = (
   | OrderTransaction
   | DividendTransaction
   | CashTransaction
-  | SplitTransaction
+  | CorporateActionTransaction
 )[];

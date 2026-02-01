@@ -113,12 +113,7 @@ export const identifyTransactionEventType = (
     }
   }
 
-  console.warn(
+  throw Error(
     `Could not identify transaction event type for ID: ${transaction.id}`,
-    {
-      title: transaction.title,
-      subtitle: transaction.subtitle,
-    },
   );
-  return null;
 };

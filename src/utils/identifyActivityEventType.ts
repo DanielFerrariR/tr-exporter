@@ -20,12 +20,12 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT;
   }
 
-  // Stock splits or reverse splits that change the number of shares held
+  // Corporate actions that change the number of shares held
   if (
     activity.subtitle === 'Stock split' ||
-    activity.subtitle === 'Corporate action' // Corporate action is a generic old name for stock splits
+    activity.subtitle === 'Corporate action'
   ) {
-    return ACTIVITY_EVENT_TYPE.STOCK_SPLIT;
+    return ACTIVITY_EVENT_TYPE.CORPORATE_ACTION;
   }
 
   // Non-portfolio-related transactions
@@ -37,7 +37,7 @@ export const identifyActivityEventType = (
     activity.subtitle === 'Annual general meeting' ||
     activity.subtitle === 'Company Notice'
   ) {
-    return ACTIVITY_EVENT_TYPE.CORPORATE_ACTION;
+    return ACTIVITY_EVENT_TYPE.CORPORATE_NOTIFICATION;
   }
 
   // Welcome stock gifts that were not redeemed in time
@@ -225,12 +225,5 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.OPEN_ACCOUNT_PROVIDED;
   }
 
-  console.warn(
-    `Could not identify activity event type for ID: ${activity.id}`,
-    {
-      title: activity.title,
-      subtitle: activity.subtitle,
-    },
-  );
-  return null;
+  throw Error(`Could not identify activity event type for ID: ${activity.id}`);
 };

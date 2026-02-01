@@ -8,10 +8,10 @@ export enum ACTIVITY_EVENT_TYPE {
   LIMIT_ORDER_CANCELED = 'Limit Order Canceled', // Cancelled limit buy/sell orders
   ORDER_REJECTED = 'Order Rejected', // Rejected buy/sell orders
   SECURITY_CHANGE = 'Security Change', // Changes to securities (e.g., ETF changes)
-  STOCK_SPLIT = 'Stock Split', // Stock splits or reverse splits
-  CORPORATE_ACTION = 'Corporate Action', // General corporate actions
+  CORPORATE_ACTION = 'Corporate Action', // Corporate actions that change the number of shares held
 
   // Non-portfolio-related transactions
+  CORPORATE_NOTIFICATION = 'Corporate Notification', // Corporate notifications
   ADDRESS_CHANGED = 'Address Changed', // Updates to the residential address
   CASH_ACCOUNT_CHANGED = 'Cash Account Changed', // Updates or changes to the internal cash account
   CITIZENSHIP_UPDATE = 'Citizenship Update', // Changes or updates to the user's citizenship status

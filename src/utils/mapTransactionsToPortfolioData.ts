@@ -4,7 +4,7 @@ import {
   CashTransaction,
   OrderTransaction,
   PortfolioData,
-  SplitTransaction,
+  CorporateActionTransaction,
   Transaction,
   TRANSACTION_TYPE,
   TransactionDataObject,
@@ -21,8 +21,10 @@ const SECTION_TITLE_TRANSACTION = 'Transaction';
 const SECTION_TITLE_OVERVIEW = 'Overview';
 const SUBSECTION_TITLE_SHARES = 'Shares';
 const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
-const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited Shares';
-const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited Shares';
+const SUBSECTION_TITLE_SHARES_ADDED = 'Shares added';
+const SUBSECTION_TITLE_SHARES_REMOVED = 'Shares removed'; // No info if this is the correct name
+const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited shares';
+const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited shares';
 const SUBSECTION_TITLE_TAX = 'Tax';
 const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
 const SUBSECTION_TITLE_FEE = 'Fee';
@@ -95,7 +97,7 @@ const handleDividend = (transaction: Transaction): DividendTransaction => {
 
   if (!transactionSection) {
     throw new Error(
-      `Missing Transaction section in dividend: ${transaction.title}`,
+      `Missing Transaction section in dividend: ${transaction.id}`,
     );
   }
 
@@ -155,7 +157,7 @@ const handleStockGift = (
 
   if (!transactionSection) {
     throw new Error(
-      `Missing ${sectionTitle} section in stock gift: ${transaction.title}`,
+      `Missing ${sectionTitle} section in stock gift: ${transaction.id}`,
     );
   }
 
@@ -255,7 +257,7 @@ const handleTradeTransaction = (transaction: Transaction): PortfolioData => {
 
     if (!overviewSection) {
       throw new Error(
-        `Missing Transaction or Overview section in trade: ${transaction.title}`,
+        `Missing Transaction or Overview section in trade: ${transaction.id}`,
       );
     }
 
@@ -369,20 +371,51 @@ const handleTaxCorrection = (transaction: Transaction): CashTransaction => {
   };
 };
 
-const handleSplit = (transaction: Transaction): SplitTransaction => {
+const handleCorporateAction = (
+  transaction: Transaction,
+): CorporateActionTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
   const date = extractDate(transaction.timestamp);
   const isin = extractIsinFromIcon(transaction.icon);
+
+  const overviewSection = findTableSection(
+    transaction.sections,
+    SECTION_TITLE_OVERVIEW,
+  );
+
+  if (overviewSection) {
+    const sharesAdded = parseToBigNumber(
+      getDetailText(
+        findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED),
+      ),
+    ).toFixed();
+    const sharesRemoved = parseToBigNumber(
+      getDetailText(
+        findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED),
+      ),
+    ).toFixed();
+
+    return {
+      title: `${transaction.title} - Corporate Action`,
+      eventType:
+        transaction.eventType as TRANSACTION_EVENT_TYPE.CORPORATE_ACTION,
+      date,
+      isin,
+      creditedShares: sharesAdded,
+      debitedShares: sharesRemoved,
+    };
+  }
+
   const transactionSection = findTableSection(
     transaction.sections,
     SECTION_TITLE_TRANSACTION,
   );
 
   if (!transactionSection) {
-    throw new Error(
-      `Missing Transaction section in split: ${transaction.title}`,
+    throw Error(
+      `Missing Overview and Transaction section in corporate action: ${transaction.id}`,
     );
   }
 
@@ -399,7 +432,7 @@ const handleSplit = (transaction: Transaction): SplitTransaction => {
 
   return {
     title: transaction.title,
-    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.SPLIT,
+    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.CORPORATE_ACTION,
     date,
     isin,
     creditedShares,
@@ -468,8 +501,8 @@ export const mapTransactionsToPortfolioData = (
           portfolioData.push(handleTaxCorrection(transaction));
           break;
 
-        case TRANSACTION_EVENT_TYPE.SPLIT:
-          portfolioData.push(handleSplit(transaction));
+        case TRANSACTION_EVENT_TYPE.CORPORATE_ACTION:
+          portfolioData.push(handleCorporateAction(transaction));
           break;
 
         default:
