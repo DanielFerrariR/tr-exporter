@@ -171,8 +171,17 @@ const handleStockGift = (
   const quantity = parseToBigNumber(getDetailText(sharesSubSection)).toFixed();
   const price = parseToBigNumber(getDetailText(sharePriceSubSection)).toFixed();
 
+  let titleSuffix = '';
+  if (transaction.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT) {
+    titleSuffix = ' - Welcome Stock Gift';
+  } else if (transaction.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT) {
+    titleSuffix = ' - Received Gift';
+  } else if (transaction.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT) {
+    titleSuffix = ' - Give Away Gift';
+  }
+
   return {
-    title: transaction.title,
+    title: `${transaction.title}${titleSuffix}`,
     eventType: transaction.eventType as
       | TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT
       | TRANSACTION_EVENT_TYPE.RECEIVED_GIFT

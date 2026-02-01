@@ -9,7 +9,8 @@ export const identifyTransactionEventType = (
   if (
     transaction.subtitle === 'Cash dividend' ||
     transaction.subtitle === 'Dividend' ||
-    transaction.subtitle === 'Cash dividend corrected'
+    transaction.subtitle === 'Cash dividend corrected' ||
+    transaction.subtitle === 'Savings failed'
   ) {
     return TRANSACTION_EVENT_TYPE.DIVIDEND;
   }
@@ -54,17 +55,20 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
   }
 
-  // Sent Stock Gift (Received gifts aren't included in transactions list)
+  // Stock Gifts (Received or Sent)
   if (
     transaction.title === 'Stock Gift' &&
     transaction.subtitle === 'Accepted'
   ) {
+    if (transaction.amount === null) {
+      return TRANSACTION_EVENT_TYPE.RECEIVED_GIFT;
+    }
     return TRANSACTION_EVENT_TYPE.SENT_GIFT;
   }
 
-  // Welcome Stock Gift
+  // Welcome Stock Gift (They use the stock title)
   if (
-    transaction.title === 'Stock Perk' &&
+    transaction.title !== 'Give-away' &&
     transaction.subtitle === 'Redeemed'
   ) {
     return TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT;
@@ -72,7 +76,7 @@ export const identifyTransactionEventType = (
 
   // Give Away Gift
   if (
-    transaction.title === 'Give-away' &&
+    (transaction.title === 'Give-away' || transaction.title === 'Giveaway') &&
     transaction.subtitle === 'Redeemed'
   ) {
     return TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT;
@@ -88,11 +92,14 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.TRANSFER;
   }
 
-  // Status indicators: subtitle is "Declined", "Cancelled", or "Card verification"
+  // Status indicators: subtitle is "Declined", "Cancelled", "Card verification", "Savings failed", etc.
   if (
     transaction.subtitle === 'Declined' ||
     transaction.subtitle === 'Cancelled' ||
-    transaction.subtitle === 'Card verification'
+    transaction.subtitle === 'Card verification' ||
+    transaction.subtitle === 'Savings failed' ||
+    transaction.subtitle === 'Saving failed' ||
+    transaction.subtitle?.toLowerCase().includes('canceled')
   ) {
     return TRANSACTION_EVENT_TYPE.STATUS_INDICATOR;
   }
@@ -106,5 +113,12 @@ export const identifyTransactionEventType = (
     }
   }
 
+  console.warn(
+    `Could not identify transaction event type for ID: ${transaction.id}`,
+    {
+      title: transaction.title,
+      subtitle: transaction.subtitle,
+    },
+  );
   return null;
 };
