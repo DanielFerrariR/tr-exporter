@@ -23,8 +23,8 @@ const SUBSECTION_TITLE_SHARES = 'Shares';
 const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
 const SUBSECTION_TITLE_SHARES_ADDED = 'Shares added';
 const SUBSECTION_TITLE_SHARES_REMOVED = 'Shares removed'; // No info if this is the correct name
-const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited shares';
-const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited shares';
+const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited Shares';
+const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited Shares';
 const SUBSECTION_TITLE_TAX = 'Tax';
 const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
 const SUBSECTION_TITLE_FEE = 'Fee';
@@ -378,14 +378,19 @@ const handleCorporateAction = (
     throw new Error('Transaction eventType is required');
   }
   const date = extractDate(transaction.timestamp);
-  const isin = extractIsinFromIcon(transaction.icon);
+  let isin = extractIsinFromIcon(transaction.icon);
 
+  // Edge case for corporate actions where the icon can be in the title
+  if (isin === 'timeline_refresh') {
+    isin = transaction.title;
+  }
+
+  // New format
   const overviewSection = findTableSection(
     transaction.sections,
     SECTION_TITLE_OVERVIEW,
   );
-
-  if (overviewSection) {
+  if (overviewSection && transaction.subtitle === 'Stock Split') {
     const sharesAdded = parseToBigNumber(
       getDetailText(
         findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED),

@@ -18,6 +18,8 @@ import {
 const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowballTransactions.csv';
 const DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES = '1';
+const DISABLED_PRICE_FOR_SPLIT = '1';
+const DISABLED_PRICE_FOR_STOCK_AS_DIVIDEND = '0';
 const DEFAULT_CURRENCY = 'EUR';
 
 // Event types
@@ -27,6 +29,7 @@ const EVENT_TYPE_SELL = 'Sell';
 const EVENT_TYPE_CASH_GAIN = 'Cash_Gain';
 const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
 const EVENT_TYPE_SPLIT = 'Split';
+const EVENT_TYPE_STOCK_AS_DIVIDEND = 'Stock_As_Dividend';
 
 // Type map
 const TYPE_MAP = {
@@ -189,7 +192,7 @@ export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
   };
 };
 
-export const handleSplitTransaction = async (
+export const handleCorporateActionTransaction = async (
   item: CorporateActionTransaction,
 ): Promise<CsvRowData> => {
   // Get remap data for this ISIN
@@ -198,16 +201,36 @@ export const handleSplitTransaction = async (
   const isin = remap.isin;
   const currency = remap.currency;
 
+  // if both values exist, then it's a split
+  if (
+    parseToBigNumber(item.debitedShares).isGreaterThan(0) &&
+    parseToBigNumber(item.creditedShares).isGreaterThan(0)
+  ) {
+    return {
+      event: EVENT_TYPE_SPLIT,
+      date: item.date,
+      symbol: isin,
+      exchange: '',
+      note: item.title,
+      quantity: DISABLED_PRICE_FOR_SPLIT,
+      price: parseToBigNumber(item.creditedShares)
+        .dividedBy(parseToBigNumber(item.debitedShares))
+        .toFixed(),
+      currency,
+      feeTax: '',
+      feeCurrency: '',
+      doNotAdjustCash: '',
+    };
+  }
+
   return {
-    event: EVENT_TYPE_SPLIT,
+    event: EVENT_TYPE_STOCK_AS_DIVIDEND,
     date: item.date,
     symbol: isin,
     exchange: '',
     note: item.title,
     quantity: item.creditedShares,
-    price: parseToBigNumber(item.creditedShares)
-      .dividedBy(parseToBigNumber(item.debitedShares))
-      .toFixed(),
+    price: DISABLED_PRICE_FOR_STOCK_AS_DIVIDEND,
     currency,
     feeTax: '',
     feeCurrency: '',
@@ -249,7 +272,7 @@ export const convertItemToCsvRow = async (
 
     // Split
     if (item.eventType === TRANSACTION_EVENT_TYPE.CORPORATE_ACTION) {
-      const row = await handleSplitTransaction(item);
+      const row = await handleCorporateActionTransaction(item);
       return [row];
     }
 
