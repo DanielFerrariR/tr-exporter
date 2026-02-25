@@ -177,7 +177,10 @@ export const identifyActivityEventType = (
   }
 
   // Annual report detailing all costs incurred
-  if (trActivityType === 'EX_POST_COST_REPORT_CREATED') {
+  if (
+    trActivityType === 'EX_POST_COST_REPORT_CREATED' ||
+    trActivityType === 'EX_POST_COST_REPORT'
+  ) {
     return ACTIVITY_EVENT_TYPE.EX_POST_COST_REPORT;
   }
 
