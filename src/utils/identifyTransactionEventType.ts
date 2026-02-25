@@ -3,7 +3,7 @@ import { Transaction } from '@/types';
 
 export const identifyTransactionEventType = (
   transaction: Transaction,
-): TRANSACTION_EVENT_TYPE | null => {
+): TRANSACTION_EVENT_TYPE => {
   // Portfolio-related activities
   // Dividends
   if (

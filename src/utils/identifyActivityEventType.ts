@@ -3,7 +3,7 @@ import { Activity } from '@/types';
 
 export const identifyActivityEventType = (
   activity: Activity,
-): ACTIVITY_EVENT_TYPE | null => {
+): ACTIVITY_EVENT_TYPE => {
   const trActivityType = activity.eventType as string | null;
 
   // Portfolio-related activities

@@ -123,7 +123,7 @@ export const downloadTransactions = async (): Promise<{
             // Identify activity event types
             activities = activities.map((activity) => ({
               ...activity,
-              eventType: identifyActivityEventType(activity) ?? undefined,
+              eventType: identifyActivityEventType(activity),
             }));
 
             console.log('All activities fetched.');
@@ -159,7 +159,7 @@ export const downloadTransactions = async (): Promise<{
             // Identify transaction event types
             transactions = transactions.map((transaction) => ({
               ...transaction,
-              eventType: identifyTransactionEventType(transaction) ?? undefined,
+              eventType: identifyTransactionEventType(transaction),
             }));
 
             // Adding received gift transactions from activities as transactions list doesn't include received gifts
