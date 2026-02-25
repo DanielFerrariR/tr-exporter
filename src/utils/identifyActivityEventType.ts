@@ -117,7 +117,7 @@ export const identifyActivityEventType = (
     trActivityType === 'DOCUMENTS_ACCEPTED' ||
     trActivityType === 'DOCUMENTS_CHANGED' ||
     trActivityType === 'DOCUMENTS_CREATED' ||
-    trActivityType?.includes('CRYPTO_TNC_UPDATE_202') // CRYPTO_TNC_UPDATE_2025, CRYPTO_TNC_UPDATE_2026, etc.
+    trActivityType?.includes('CRYPTO_TNC_UPDATE_') // CRYPTO_TNC_UPDATE_2025, CRYPTO_TNC_UPDATE_2026, etc.
   ) {
     return ACTIVITY_EVENT_TYPE.LEGAL_DOCUMENTS;
   }
