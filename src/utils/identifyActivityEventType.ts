@@ -122,8 +122,11 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.LEGAL_DOCUMENTS;
   }
 
-  // Pairing or identification of a new mobile device
-  if (trActivityType === 'DEVICE_RESET') {
+  // Pairing or identification of a new mobile device (TR event type is null in some cases)
+  if (
+    trActivityType === 'DEVICE_RESET' ||
+    (activity.title === 'New device' && trActivityType === null)
+  ) {
     return ACTIVITY_EVENT_TYPE.NEW_DEVICE;
   }
 
