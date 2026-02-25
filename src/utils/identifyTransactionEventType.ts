@@ -114,6 +114,6 @@ export const identifyTransactionEventType = (
   }
 
   throw Error(
-    `Could not identify transaction event type for ID: ${transaction.id}`,
+    `Could not identify transaction event type: ${JSON.stringify(transaction)}`,
   );
 };

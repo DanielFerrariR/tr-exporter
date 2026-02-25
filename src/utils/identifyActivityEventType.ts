@@ -4,87 +4,87 @@ import { Activity } from '@/types';
 export const identifyActivityEventType = (
   activity: Activity,
 ): ACTIVITY_EVENT_TYPE | null => {
+  const trActivityType = activity.eventType as string | null;
+
   // Portfolio-related activities
   // Received stock gifts from a friend
-  if (activity.title === 'Stock Gift' && activity.subtitle === 'Accepted') {
+  if (trActivityType === 'GIFTING_RECIPIENT_ACTIVITY') {
     return ACTIVITY_EVENT_TYPE.RECEIVED_GIFT;
   }
 
-  // Welcome stock gifts when opening an account  (They use the stock title)
-  if (activity.title !== 'Giveaway' && activity.subtitle === 'Redeemed') {
+  if (trActivityType === 'STOCK_PERK_REFUNDED') {
     return ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT;
   }
 
   // Give away stock gifts from Trade Republic
-  if (activity.title === 'Giveaway' && activity.subtitle === 'Redeemed') {
+  if (trActivityType === 'GIFTING_LOTTERY_PRIZE_ACTIVITY') {
     return ACTIVITY_EVENT_TYPE.GIVE_AWAY_GIFT;
   }
 
-  // Corporate actions that change the number of shares held
+  // Corporate actions that change the number of shares held (using subtitle if eventType is too generic)
   if (
     activity.subtitle === 'Stock split' ||
-    activity.subtitle === 'Corporate action'
+    trActivityType === 'SHAREBOOKING'
   ) {
     return ACTIVITY_EVENT_TYPE.CORPORATE_ACTION;
   }
 
   // Non-portfolio-related transactions
-  // General corporate actions like meetings, notices, or instructions
+  // General corporate actions like meetings, notices, or instructions (using subtitle if eventType is too generic)
   if (
     activity.subtitle === 'Preliminary Lump Sum' ||
-    activity.subtitle === 'Stock Dividend Instruction' ||
-    activity.subtitle === 'General Meeting' ||
+    trActivityType === 'INSTRUCTION_CORPORATE_ACTION' ||
+    trActivityType === 'GENERAL_MEETING' ||
     activity.subtitle === 'Annual general meeting' ||
-    activity.subtitle === 'Company Notice'
+    trActivityType === 'GESH_CORPORATE_ACTION'
   ) {
     return ACTIVITY_EVENT_TYPE.CORPORATE_NOTIFICATION;
   }
 
   // Welcome stock gifts that were not redeemed in time
-  if (activity.subtitle === 'Expired') {
+  if (trActivityType === 'STOCK_PERK_EXPIRED') {
     return ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT_EXPIRED;
   }
 
-  // Selection between receiving cash dividends or stock dividends
+  // Selection between receiving cash dividends or stock dividends (tr event type is too generic)
   if (activity.subtitle === 'Cash or Stock') {
     return ACTIVITY_EVENT_TYPE.CASH_OR_STOCK;
   }
 
   // Buy or Sell limit orders that were canceled or expired
   if (
-    activity.subtitle?.toLowerCase().includes('limit') &&
-    (activity.subtitle?.toLowerCase().includes('canceled') ||
-      activity.subtitle?.toLowerCase().includes('expired'))
+    trActivityType === 'ORDER_CANCELED' ||
+    trActivityType === 'TRADING_ORDER_CANCELLED'
   ) {
     return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_CANCELED;
   }
 
+  if (trActivityType === 'ORDER_EXPIRED') {
+    return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_EXPIRED;
+  }
+
   // Orders that were rejected by the system
-  if (activity.subtitle?.toLowerCase().includes('order rejected')) {
+  if (trActivityType === 'TRADING_ORDER_REJECTED') {
     return ACTIVITY_EVENT_TYPE.ORDER_REJECTED;
   }
 
-  // Updates to securities, such as name changes or bankruptcies
+  // Updates to securities, such as name changes or bankruptcies (TR event type is too generic)
   if (activity.subtitle === 'Change' || activity.subtitle === 'Bankruptcy') {
     return ACTIVITY_EVENT_TYPE.SECURITY_CHANGE;
   }
 
   // Non-portfolio-related transactions
   // Updates to the residential address
-  if (
-    activity.title === 'Address' &&
-    (activity.subtitle === 'Changed' ||
-      activity.subtitle === 'Change requested')
-  ) {
+  if (trActivityType === 'ADDRESS_CHANGED') {
     return ACTIVITY_EVENT_TYPE.ADDRESS_CHANGED;
   }
 
   // Updates or changes to the internal cash account
-  if (activity.title === 'Cash account' && activity.subtitle === 'Changed') {
+  if (trActivityType === 'CASH_ACCOUNT_CHANGED') {
     return ACTIVITY_EVENT_TYPE.CASH_ACCOUNT_CHANGED;
   }
 
-  // Changes or updates to the user's citizenship status
+  // Changes or updates to the user's citizenship status (TR event type is null)
   if (
     activity.title === 'Citizenship update' &&
     activity.subtitle === 'Updated'
@@ -93,44 +93,41 @@ export const identifyActivityEventType = (
   }
 
   // Confirmation of email address verification
-  if (activity.title === 'Email' && activity.subtitle === 'Verified') {
+  if (trActivityType === 'EMAIL_VALIDATED') {
     return ACTIVITY_EVENT_TYPE.EMAIL_VERIFIED;
   }
 
-  // Updates to the tax exemption order (Freistellungsauftrag)
-  if (
-    activity.title === 'Exemption order' &&
-    (activity.subtitle === 'Changed' ||
-      activity.subtitle === 'Change requested')
-  ) {
+  // Change to the tax exemption order (Freistellungsauftrag)
+  if (trActivityType === 'EXEMPTION_ORDER_CHANGED') {
     return ACTIVITY_EVENT_TYPE.EXEMPTION_ORDER_CHANGED;
   }
 
+  // Request changes to the tax exemption order (Freistellungsauftrag)
+  if (trActivityType === 'EXEMPTION_ORDER_CHANGE_REQUESTED') {
+    return ACTIVITY_EVENT_TYPE.EXEMPTION_ORDER_CHANGE_REQUESTED;
+  }
+
   // Successful verification of user identity
-  if (
-    activity.title === 'Identity Verification' &&
-    activity.subtitle === 'Successfully verified'
-  ) {
+  if (trActivityType === 'VERIFICATION_TRANSFER_ACCEPTED') {
     return ACTIVITY_EVENT_TYPE.IDENTITY_VERIFICATION;
   }
 
   // Acceptance or addition of legal agreements and documents
   if (
-    (activity.title === 'Legal Documents' ||
-      activity.title === 'Legal documents') &&
-    (activity.subtitle === 'Accepted' ||
-      activity.subtitle === 'Added' ||
-      activity.subtitle === 'Changed')
+    trActivityType === 'DOCUMENTS_ACCEPTED' ||
+    trActivityType === 'DOCUMENTS_CHANGED' ||
+    trActivityType === 'DOCUMENTS_CREATED' ||
+    trActivityType?.includes('CRYPTO_TNC_UPDATE_202') // CRYPTO_TNC_UPDATE_2025, CRYPTO_TNC_UPDATE_2026, etc.
   ) {
     return ACTIVITY_EVENT_TYPE.LEGAL_DOCUMENTS;
   }
 
   // Pairing or identification of a new mobile device
-  if (activity.title === 'New device') {
+  if (trActivityType === 'DEVICE_RESET') {
     return ACTIVITY_EVENT_TYPE.NEW_DEVICE;
   }
 
-  // Confirmation of personal user details
+  // Confirmation of personal user details (TR event type is null)
   if (
     activity.title === 'Personal details' &&
     activity.subtitle === 'Confirmed'
@@ -139,38 +136,35 @@ export const identifyActivityEventType = (
   }
 
   // Updates to the registered phone number
-  if (activity.title === 'Phone number' && activity.subtitle === 'Changed') {
+  if (trActivityType === 'MOBILE_CHANGED') {
     return ACTIVITY_EVENT_TYPE.PHONE_NUMBER_CHANGED;
   }
 
   // Updates to the security PIN for the account
-  if (activity.title === 'PIN' && activity.subtitle === 'Changed') {
+  if (trActivityType === 'PIN_CHANGED') {
     return ACTIVITY_EVENT_TYPE.PIN_CHANGED;
   }
 
   // Submission of proof of wealth documents
-  if (activity.title === 'Proof of Wealth' && activity.subtitle === 'Added') {
+  if (trActivityType === 'AML_SOURCE_OF_WEALTH_RESPONSE_EXECUTED') {
     return ACTIVITY_EVENT_TYPE.PROOF_OF_WEALTH_ADDED;
   }
 
   // Changes to the linked external bank account
-  if (
-    activity.title === 'Reference account' &&
-    activity.subtitle === 'Changed'
-  ) {
+  if (trActivityType === 'REFERENCE_ACCOUNT_CHANGED') {
     return ACTIVITY_EVENT_TYPE.REFERENCE_ACCOUNT_CHANGED;
   }
 
   // Successful opening of the securities trading account
-  if (
-    activity.title === 'Securities account' &&
-    activity.subtitle === 'Opened'
-  ) {
+  if (trActivityType === 'SECURITIES_ACCOUNT_CREATED') {
     return ACTIVITY_EVENT_TYPE.SECURITIES_ACCOUNT_OPENED;
   }
 
   // Availability of the annual tax report
-  if (activity.title === 'Annual Tax Report') {
+  if (
+    trActivityType === 'TAX_YEAR_END_REPORT_CREATED' ||
+    trActivityType === 'YEAR_END_TAX_REPORT'
+  ) {
     return ACTIVITY_EVENT_TYPE.ANNUAL_TAX_REPORT;
   }
 
@@ -180,40 +174,37 @@ export const identifyActivityEventType = (
   }
 
   // Annual report detailing all costs incurred
-  if (activity.title === 'Ex-post cost report') {
+  if (trActivityType === 'EX_POST_COST_REPORT_CREATED') {
     return ACTIVITY_EVENT_TYPE.EX_POST_COST_REPORT;
   }
 
   // Availability of the quarterly account statement
-  if (activity.title === 'Quarterly report') {
+  if (trActivityType === 'QUARTERLY_REPORT') {
     return ACTIVITY_EVENT_TYPE.QUARTERLY_REPORT;
   }
 
   // Receipt of key investor information documents
-  if (
-    activity.title === 'Key Information' &&
-    activity.subtitle === 'Received'
-  ) {
+  if (trActivityType === 'CUSTOMER_CREATED') {
     return ACTIVITY_EVENT_TYPE.KEY_INFORMATION_RECEIVED;
   }
 
   // Completion of the investment suitability test
-  if (activity.title === 'Suitability assessment') {
+  if (trActivityType === 'PRIVATE_MARKETS_SUITABILITY_QUIZ_COMPLETED') {
     return ACTIVITY_EVENT_TYPE.SUITABILITY_ASSESSMENT;
   }
 
-  // Assignment of a new IBAN for the cash account
+  // Assignment of a new IBAN for the cash account (TR event type is null)
   if (activity.title === 'New IBAN') {
     return ACTIVITY_EVENT_TYPE.NEW_IBAN;
   }
 
-  // Generic current account related updates
+  // Generic current account related updates (TR event type is null)
   if (activity.title === 'Current account') {
     return ACTIVITY_EVENT_TYPE.CURRENT_ACCOUNT;
   }
 
   // Dispatch of the Personal Unblocking Key
-  if (activity.title === 'PUK sent') {
+  if (trActivityType === 'PUK_CREATED') {
     return ACTIVITY_EVENT_TYPE.PUK_SENT;
   }
 
@@ -225,5 +216,7 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.OPEN_ACCOUNT_PROVIDED;
   }
 
-  throw Error(`Could not identify activity event type for ID: ${activity.id}`);
+  throw Error(
+    `Could not identify activity event type: ${JSON.stringify(activity)}`,
+  );
 };

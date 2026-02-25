@@ -6,6 +6,7 @@ export enum ACTIVITY_EVENT_TYPE {
   WELCOME_STOCK_GIFT_EXPIRED = 'Welcome Stock Gift Expired', // Expired Welcome stock gifts
   CASH_OR_STOCK = 'Cash or Stock', // Dividend reinvestment options
   LIMIT_ORDER_CANCELED = 'Limit Order Canceled', // Cancelled limit buy/sell orders
+  LIMIT_ORDER_EXPIRED = 'Limit Order Expired', // Expired limit buy/sell orders
   ORDER_REJECTED = 'Order Rejected', // Rejected buy/sell orders
   SECURITY_CHANGE = 'Security Change', // Changes to securities (e.g., ETF changes)
   CORPORATE_ACTION = 'Corporate Action', // Corporate actions that change the number of shares held
@@ -16,7 +17,8 @@ export enum ACTIVITY_EVENT_TYPE {
   CASH_ACCOUNT_CHANGED = 'Cash Account Changed', // Updates or changes to the internal cash account
   CITIZENSHIP_UPDATE = 'Citizenship Update', // Changes or updates to the user's citizenship status
   EMAIL_VERIFIED = 'Email Verified', // Confirmation of email address verification
-  EXEMPTION_ORDER_CHANGED = 'Exemption Order Changed', // Updates to the tax exemption order (Freistellungsauftrag)
+  EXEMPTION_ORDER_CHANGED = 'Exemption Order Changed', // Change to the tax exemption order (Freistellungsauftrag)
+  EXEMPTION_ORDER_CHANGE_REQUESTED = 'Exemption Order Change Requested', // Request changes to the tax exemption order (Freistellungsauftrag)
   IDENTITY_VERIFICATION = 'Identity Verification', // Successful verification of user identity
   LEGAL_DOCUMENTS = 'Legal Documents', // Acceptance or addition of legal agreements and documents
   NEW_DEVICE = 'New Device', // Pairing or identification of a new mobile device
@@ -26,7 +28,7 @@ export enum ACTIVITY_EVENT_TYPE {
   PROOF_OF_WEALTH_ADDED = 'Proof of Wealth Added', // Submission of proof of wealth documents
   REFERENCE_ACCOUNT_CHANGED = 'Reference Account Changed', // Changes to the linked external bank account
   SECURITIES_ACCOUNT_OPENED = 'Securities Account Opened', // Successful opening of the securities trading account
-  ANNUAL_TAX_REPORT = 'Annual Tax Report', // Availability of the annual tax report
+  ANNUAL_TAX_REPORT = 'Annual Tax Report', // Annual tax report
   CRYPTO_ANNUAL_STATEMENT = 'Crypto Annual Statement', // Availability of the annual crypto statement
   EX_POST_COST_REPORT = 'Ex-post Cost Report', // Annual report detailing all costs incurred
   QUARTERLY_REPORT = 'Quarterly Report', // Availability of the quarterly account statement
