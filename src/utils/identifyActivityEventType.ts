@@ -208,7 +208,7 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.PUK_SENT;
   }
 
-  // Information provided for opening secondary accounts (e.g., for children)
+  // Information provided for opening secondary accounts (e.g., for children) (TR event type is null)
   if (
     activity.title.startsWith('Open ') &&
     activity.title.endsWith(' account')
