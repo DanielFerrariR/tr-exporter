@@ -6,6 +6,7 @@ export enum ACTIVITY_EVENT_TYPE {
   WELCOME_STOCK_GIFT_EXPIRED = 'Welcome Stock Gift Expired', // Expired Welcome stock gifts
   CASH_OR_STOCK = 'Cash or Stock', // Dividend reinvestment options
   LIMIT_ORDER_CANCELED = 'Limit Order Canceled', // Cancelled limit buy/sell orders
+  LIMIT_ORDER_CREATED = 'Limit Order Created', // Created limit buy/sell orders
   LIMIT_ORDER_EXPIRED = 'Limit Order Expired', // Expired limit buy/sell orders
   ORDER_REJECTED = 'Order Rejected', // Rejected buy/sell orders
   SECURITY_CHANGE = 'Security Change', // Changes to securities (e.g., ETF changes)

@@ -59,6 +59,10 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_CANCELED;
   }
 
+  if (trActivityType === 'TRADING_ORDER_CREATED') {
+    return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_CREATED;
+  }
+
   if (trActivityType === 'ORDER_EXPIRED') {
     return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_EXPIRED;
   }
