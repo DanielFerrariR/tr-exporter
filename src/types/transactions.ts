@@ -47,7 +47,7 @@ export interface TransactionDataObject {
 export interface TransactionHeaderSection {
   title: string;
   data: {
-    icon: string;
+    icon: string | { asset: string; badge: string | null };
     timestamp: string;
     status: string;
     subtitleText?: string | null;
