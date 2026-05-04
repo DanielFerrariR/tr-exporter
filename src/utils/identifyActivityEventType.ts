@@ -176,7 +176,10 @@ export const identifyActivityEventType = (
   }
 
   // Availability of the annual crypto statement
-  if (activity.title === 'Crypto Annual Statement') {
+  if (
+    trActivityType === 'CRYPTO_ANNUAL_STATEMENT' ||
+    activity.title === 'Crypto Annual Statement'
+  ) {
     return ACTIVITY_EVENT_TYPE.CRYPTO_ANNUAL_STATEMENT;
   }
 
