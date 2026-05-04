@@ -2,9 +2,12 @@ import readlineSync from 'readline-sync';
 import { TradeRepublicAPI } from '@/api';
 import {
   TradeRepublicApiLoginError,
-  TradeRepublicApiPinVerificationError,
+  TradeRepublicApiLoginProcessError,
 } from '@/types';
 import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+
+const POLL_INTERVAL_MS = 2000;
+const POLL_TIMEOUT_MS = 120000;
 
 export async function login(): Promise<boolean> {
   console.log('Starting Trade Republic login process...');
@@ -16,12 +19,15 @@ export async function login(): Promise<boolean> {
   }
 
   console.log(`Using phone number: ${phoneNumber}`);
-  const pin = readlineSync.question('Please enter your 4-digit PIN: ');
+  const pin = readlineSync.question('Please enter your 4-digit PIN: ', {
+    hideEchoBack: true,
+    mask: '',
+  });
 
   let processId: string;
 
   try {
-    console.log('Sending initial login request...');
+    console.log('Sending login request...');
     const response = await TradeRepublicAPI.getInstance().login({
       phoneNumber,
       pin,
@@ -29,70 +35,72 @@ export async function login(): Promise<boolean> {
 
     if (!response.data?.processId) {
       console.error(
-        'Initial login response did not contain processId. Response:',
+        'Login response did not contain processId. Response:',
         response.data,
       );
       return false;
     }
 
     processId = response.data.processId;
-    console.log(`Initial login successful. Process ID: ${processId}`);
     console.log(
-      `Countdown for Push-Notification PIN: ${response.data.countdownInSeconds} seconds`,
+      'Please approve the login request in your Trade Republic app...',
     );
-    console.log(`2FA Method: ${response.data['2fa']}`);
   } catch (error: unknown) {
     if (error instanceof TradeRepublicApiLoginError) {
-      console.error(`Error during initial login: ${error.message}`);
+      console.error(`Error during login: ${error.message}`);
       console.error('Response data:', error.responseData);
     } else if (error instanceof Error) {
       console.error(
-        `An unexpected error occurred during initial login: ${error.message}`,
+        `An unexpected error occurred during login: ${error.message}`,
       );
     } else {
-      console.error(
-        'An unexpected error occurred during initial login:',
-        error,
-      );
+      console.error('An unexpected error occurred during login:', error);
     }
     return false;
   }
 
-  const pushNotificationPin = readlineSync.question(
-    'Please enter the 4-digit PIN you received via Push-Notification: ',
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+
+    try {
+      const result =
+        await TradeRepublicAPI.getInstance().pollLoginProcess(processId);
+
+      if (result.status === 'CONFIRMED') {
+        console.log('Login successful.');
+        return true;
+      }
+
+      if (result.status === 'DENIED') {
+        console.error('Login was denied in the app.');
+        return false;
+      }
+
+      if (result.status === 'EXPIRED') {
+        console.error('Login request expired. Please try again.');
+        return false;
+      }
+
+      // PENDING — keep polling
+    } catch (error: unknown) {
+      if (error instanceof TradeRepublicApiLoginProcessError) {
+        console.error(`Error polling login status: ${error.message}`);
+        console.error('Response data:', error.responseData);
+      } else if (error instanceof Error) {
+        console.error(
+          `An unexpected error occurred while polling: ${error.message}`,
+        );
+      } else {
+        console.error('An unexpected error occurred while polling:', error);
+      }
+      return false;
+    }
+  }
+
+  console.error(
+    'Login timed out. The request was not approved within 2 minutes.',
   );
-
-  try {
-    console.log(
-      `Verifying Push-Notification PIN for process ID: ${processId}...`,
-    );
-    await TradeRepublicAPI.getInstance().verifyPushNotificationPin({
-      processId,
-      pushNotificationPin,
-    });
-    console.log('Push-Notification PIN verification successful.');
-    console.error('Login successful.');
-    return true;
-  } catch (error: unknown) {
-    if (error instanceof TradeRepublicApiPinVerificationError) {
-      console.error(
-        `Error during Push-Notification PIN verification: ${error.message}`,
-      );
-      console.error('Response data:', error.responseData);
-      console.error(
-        'Ensure the Push-Notification PIN is correct and entered promptly.',
-      );
-    } else if (error instanceof Error) {
-      console.error(
-        `An unexpected error occurred during Push-Notification PIN verification: ${error.message}`,
-      );
-    } else {
-      console.error(
-        'An unexpected error occurred during Push-Notification PIN verification:',
-        error,
-      );
-    }
-    console.error('Login failed. Exiting.');
-    return false;
-  }
+  return false;
 }
