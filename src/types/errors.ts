@@ -15,9 +15,9 @@ export class TradeRepublicApiLoginError extends TradeRepublicApiError {
   }
 }
 
-export class TradeRepublicApiPinVerificationError extends TradeRepublicApiError {
+export class TradeRepublicApiLoginProcessError extends TradeRepublicApiError {
   constructor(message: string, responseData?: unknown) {
     super(message, responseData);
-    this.name = 'TradeRepublicApiPinVerificationError';
+    this.name = 'TradeRepublicApiLoginProcessError';
   }
 }

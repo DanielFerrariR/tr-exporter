@@ -81,7 +81,9 @@ const extractIsinFromHeader = (
   if (!headerSection?.data?.icon) {
     throw new Error('Missing icon in header section');
   }
-  return extractIsinFromIcon(headerSection.data.icon);
+  const rawIcon = headerSection.data.icon;
+  const iconStr = typeof rawIcon === 'object' ? rawIcon.asset : rawIcon;
+  return extractIsinFromIcon(iconStr);
 };
 
 const handleDividend = (transaction: Transaction): DividendTransaction => {

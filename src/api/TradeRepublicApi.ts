@@ -4,11 +4,11 @@ import axios, { AxiosInstance } from 'axios';
 import {
   ConnectOptions,
   LoginPayload,
+  LoginProcessResponse,
   SubscriptionMessagePayloadMap,
   Subscription,
   TradeRepublicApiLoginError,
-  TradeRepublicApiPinVerificationError,
-  VerifySmsPinPayload,
+  TradeRepublicApiLoginProcessError,
 } from '@/types';
 import {
   CONNECTION_MESSAGE,
@@ -18,6 +18,7 @@ import {
   TRADE_REPUBLIC_API_URL,
   TRADE_REPUBLIC_WEBSOCKET_URL,
 } from '@/constants';
+import { getOrCreateDeviceId } from '@/utils/deviceIdStorage';
 import WebSocket from 'ws';
 
 export class TradeRepublicAPI {
@@ -45,12 +46,30 @@ export class TradeRepublicAPI {
     return TradeRepublicAPI.instance;
   }
 
+  private _buildDeviceInfoHeader(): string {
+    const deviceInfo = {
+      stableDeviceId: getOrCreateDeviceId(),
+      browser: 'Chrome',
+      browserVersion: '137.0.0.0',
+      os: 'Linux',
+      osVersion: 'x86_64',
+      timezone: 'Europe/Berlin',
+      timezoneOffset: -120,
+      screen: '1920x1080x24',
+      preferredLanguages: ['en-US', 'en'],
+      numberOfCores: 8,
+      deviceMemory: 8,
+    };
+    return Buffer.from(JSON.stringify(deviceInfo)).toString('base64');
+  }
+
   public async login({ phoneNumber, pin }: LoginPayload) {
     try {
-      return await this._client.post('/api/v1/auth/web/login', {
-        phoneNumber,
-        pin,
-      });
+      return await this._client.post(
+        '/api/v2/auth/web/login',
+        { phoneNumber, pin },
+        { headers: { 'x-tr-device-info': this._buildDeviceInfoHeader() } },
+      );
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new TradeRepublicApiLoginError(
@@ -63,24 +82,28 @@ export class TradeRepublicAPI {
     }
   }
 
-  public async verifyPushNotificationPin({
-    processId,
-    pushNotificationPin,
-  }: VerifySmsPinPayload) {
+  public async pollLoginProcess(
+    processId: string,
+  ): Promise<LoginProcessResponse> {
     try {
-      await this._client.post(
-        `/api/v1/auth/web/login/${processId}/${pushNotificationPin}`,
+      const response = await this._client.get<LoginProcessResponse>(
+        `/api/v2/auth/web/login/processes/${processId}`,
+        { headers: { 'x-tr-device-info': this._buildDeviceInfoHeader() } },
       );
-      // Get the session token from cookies after login
-      const cookies: Cookie[] = await this._cookieJar.getCookies(
-        TRADE_REPUBLIC_API_URL,
-      );
-      this._sessionToken = cookies.find(
-        (cookie) => cookie.key === 'tr_session',
-      )?.value;
+
+      if (response.data.status === 'CONFIRMED') {
+        const cookies: Cookie[] = await this._cookieJar.getCookies(
+          TRADE_REPUBLIC_API_URL,
+        );
+        this._sessionToken = cookies.find(
+          (cookie) => cookie.key === 'tr_session',
+        )?.value;
+      }
+
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new TradeRepublicApiPinVerificationError(
+        throw new TradeRepublicApiLoginProcessError(
           error.message,
           error.response?.data,
         );

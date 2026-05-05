@@ -11,9 +11,11 @@ export interface LoginPayload {
   pin: string;
 }
 
-export interface VerifySmsPinPayload {
-  processId: string;
-  pushNotificationPin: string;
+export type LoginProcessStatus = 'PENDING' | 'CONFIRMED' | 'DENIED' | 'EXPIRED';
+
+export interface LoginProcessResponse {
+  status: LoginProcessStatus;
+  requiredAction: string | null;
 }
 
 export interface Subscription {
