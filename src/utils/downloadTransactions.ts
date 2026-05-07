@@ -12,6 +12,8 @@ import {
 import { TradeRepublicAPI } from '@/api';
 import { RECEIVED_COMMAND_TYPES, SUBSCRIPTION_TYPES } from '@/constants';
 import { mapTransactionsToPortfolioData } from '@/utils/mapTransactionsToPortfolioData';
+import { downloadPdfsForTransactions } from '@/utils/downloadPdfsForTransactions';
+import { restampCorrectedDividends } from '@/utils/restampCorrectedDividends';
 import { CloseEvent, ErrorEvent } from 'ws';
 import { getGiftTransactions } from '@/utils/getGiftTransactions';
 import { identifyActivityEventType } from '@/utils/identifyActivityEventType';
@@ -229,9 +231,15 @@ export const downloadTransactions = async (): Promise<{
               `${OUTPUT_DIRECTORY}/${phoneNumber}`,
             );
 
+            await downloadPdfsForTransactions(transactions, phoneNumber);
+
             console.log('Generating portfolio data...');
+            const restamped = await restampCorrectedDividends(
+              transactions,
+              phoneNumber,
+            );
             const portfolioData: PortfolioData =
-              mapTransactionsToPortfolioData(transactions);
+              mapTransactionsToPortfolioData(restamped);
 
             saveFile(
               JSON.stringify(portfolioData, null, 2),
