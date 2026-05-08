@@ -5,15 +5,15 @@ import {
   TransactionSection,
   TransactionTableSection,
 } from '@/tr';
+import { EnrichedTransaction } from '@/models';
 import {
-  EnrichedTransaction,
   DividendTransaction,
   CashTransaction,
   OrderTransaction,
-  PortfolioData,
+  Portfolio,
   CorporateActionTransaction,
   TRANSACTION_TYPE,
-} from '@/models';
+} from './index';
 import { identifyBuyOrSell } from '@/classification/identifyBuyOrSell';
 import { parseToBigNumber } from '@/utils/parseToBigNumber';
 
@@ -209,11 +209,11 @@ const handleStockGift = (
 
 const handleTradeTransaction = (
   transaction: EnrichedTransaction,
-): PortfolioData => {
+): Portfolio => {
   const date = extractDate(transaction.timestamp);
   const type = identifyBuyOrSell(transaction);
   const isin = extractIsinFromIcon(transaction.icon);
-  const result: PortfolioData = [];
+  const result: Portfolio = [];
 
   let price = '';
   let quantity = '';
@@ -457,15 +457,15 @@ const handleCorporateAction = (
 
 export const mapTransactionsToPortfolioData = (
   transactions: EnrichedTransaction[],
-): PortfolioData => {
+): Portfolio => {
   if (!transactions?.length) {
     console.warn(
-      'No data provided to convert to PortfolioData. No file will be created.',
+      'No data provided to convert to Portfolio. No file will be created.',
     );
     return [];
   }
 
-  const portfolioData: PortfolioData = [];
+  const portfolioData: Portfolio = [];
 
   for (const transaction of transactions) {
     try {

@@ -1,6 +1,6 @@
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import { EnrichedTransaction } from '@/models';
-import { TRANSACTION_TYPE } from '@/models';
+import { TRANSACTION_TYPE } from '@/portfolio';
 
 export const identifyBuyOrSell = (
   transaction: EnrichedTransaction,

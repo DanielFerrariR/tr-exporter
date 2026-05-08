@@ -2,10 +2,10 @@ import {
   DividendTransaction,
   CashTransaction,
   OrderTransaction,
-  PortfolioData,
+  Portfolio,
   CorporateActionTransaction,
   TRANSACTION_TYPE,
-} from '@/models';
+} from '@/portfolio';
 import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import {
@@ -239,7 +239,7 @@ export const handleCorporateActionTransaction = async (
 };
 
 export const convertItemToCsvRow = async (
-  item: PortfolioData[0],
+  item: Portfolio[0],
 ): Promise<CsvRowData[] | null> => {
   try {
     // Dividends
@@ -288,7 +288,7 @@ export const convertItemToCsvRow = async (
 };
 
 export const convertTransactionsToSnowballCsv = async (
-  data: PortfolioData,
+  data: Portfolio,
   phoneNumber: string,
 ): Promise<void> => {
   if (!data?.length) {

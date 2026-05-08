@@ -1,10 +1,10 @@
-import { PortfolioData } from '@/models';
+import { Portfolio } from '@/portfolio';
 import { convertTransactionsToSnowballCsv } from './snowballAnalytics';
 
 export interface Exporter {
   id: string;
   name: string;
-  convert: (data: PortfolioData, phoneNumber: string) => Promise<void>;
+  convert: (data: Portfolio, phoneNumber: string) => Promise<void>;
 }
 
 // Registry of all available exporters

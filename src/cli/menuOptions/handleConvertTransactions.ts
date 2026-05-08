@@ -1,11 +1,11 @@
 import fs from 'fs';
 import { EXPORTERS, getExporterById } from '@/exporters';
-import { PortfolioData } from '@/models';
+import { Portfolio } from '@/portfolio';
 import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 import inquirer from 'inquirer';
 
-const loadPortfolioData = async (): Promise<{
-  portfolioData: PortfolioData;
+const loadPortfolio = async (): Promise<{
+  portfolioData: Portfolio;
   phoneNumber: string;
 } | null> => {
   const phoneNumber = getPhoneNumber();
@@ -39,7 +39,7 @@ const loadPortfolioData = async (): Promise<{
 const loadCustomHoldings = async (
   phoneNumber: string,
 ): Promise<{
-  customHoldings: PortfolioData;
+  customHoldings: Portfolio;
   phoneNumber: string;
 } | null> => {
   if (!phoneNumber) {
@@ -68,7 +68,7 @@ const loadCustomHoldings = async (
 
 export const handleConvertTransactions = async (): Promise<void> => {
   try {
-    const result = await loadPortfolioData();
+    const result = await loadPortfolio();
     if (!result) return;
 
     const { portfolioData, phoneNumber } = result;
