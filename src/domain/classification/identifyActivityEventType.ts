@@ -46,8 +46,11 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.WELCOME_STOCK_GIFT_EXPIRED;
   }
 
-  // Selection between receiving cash dividends or stock dividends (tr event type is too generic)
-  if (activity.subtitle === 'Cash or Stock') {
+  // Selection between receiving cash dividends or stock dividends
+  if (
+    activity.subtitle === 'Cash or Stock' ||
+    trActivityType?.startsWith('SSP_CORPORATE_ACTION_')
+  ) {
     return ACTIVITY_EVENT_TYPE.CASH_OR_STOCK;
   }
 

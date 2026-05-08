@@ -1,10 +1,10 @@
 import fs from 'fs';
+import path from 'path';
 import { EnrichedTransaction } from '@/domain/models';
 import {
   mapTransactionsToPortfolioData,
   restampCorrectedDividends,
 } from '@/domain/portfolio';
-import { saveFile } from '@/adapters/saveFile';
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 
 export const loadTransactions = async (): Promise<{
@@ -52,11 +52,14 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     );
     const portfolioData = mapTransactionsToPortfolioData(restamped);
 
-    saveFile(
-      JSON.stringify(portfolioData, null, 2),
+    const filePath = path.join(
+      process.cwd(),
+      'build',
+      phoneNumber,
       'portfolioData.json',
-      `build/${phoneNumber}`,
     );
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(portfolioData, null, 2));
     console.log('Portfolio data generated successfully.');
   } catch (error) {
     console.error('Error converting transactions to portfolio data:', error);

@@ -6,11 +6,8 @@ import {
   handleInteractiveSocketConnection,
   handleChangePhoneNumber,
 } from '@/adapters/cli/menuOptions';
-import {
-  getPhoneNumber,
-  setPhoneNumber,
-  hasPhoneNumber,
-} from '@/adapters/cli/phoneNumberStorage';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
+import { selectOrAddAccount } from '@/adapters/cli/accountSelection';
 
 const MENU_OPTIONS = {
   DOWNLOAD_TRANSACTIONS: 'downloadTransactions',
@@ -20,23 +17,6 @@ const MENU_OPTIONS = {
   CHANGE_PHONE_NUMBER: 'changePhoneNumber',
   EXIT: 'exit',
 } as const;
-
-const promptPhoneNumber = async (): Promise<void> => {
-  const { phoneNumber } = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'phoneNumber',
-      message: 'Enter your phone number:',
-      validate: (input: string) => {
-        if (!input || input.trim().length === 0) {
-          return 'Phone number cannot be empty';
-        }
-        return true;
-      },
-    },
-  ]);
-  setPhoneNumber(phoneNumber.trim());
-};
 
 const showMenu = async (): Promise<void> => {
   while (true) {
@@ -58,11 +38,11 @@ const showMenu = async (): Promise<void> => {
               value: MENU_OPTIONS.DOWNLOAD_TRANSACTIONS,
             },
             {
-              name: 'Convert Transactions to Portfolio Data',
+              name: 'Build Portfolio from Transactions',
               value: MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO,
             },
             {
-              name: 'Convert Portfolio Data to Export Format',
+              name: 'Export Portfolio',
               value: MENU_OPTIONS.CONVERT_TRANSACTIONS,
             },
             {
@@ -70,7 +50,7 @@ const showMenu = async (): Promise<void> => {
               value: MENU_OPTIONS.INTERACTIVE_SOCKET_CONNECTION,
             },
             {
-              name: 'Change Phone Number',
+              name: 'Switch Account',
               value: MENU_OPTIONS.CHANGE_PHONE_NUMBER,
             },
             {
@@ -106,7 +86,6 @@ const showMenu = async (): Promise<void> => {
         await handleInteractiveSocketConnection();
       }
     } catch (error: unknown) {
-      // Handle Ctrl+C (SIGINT) gracefully
       if (error instanceof Error && error.name === 'ExitPromptError') {
         console.log('\n\nGracefully shutting down...');
         process.exit(0);
@@ -116,7 +95,6 @@ const showMenu = async (): Promise<void> => {
   }
 };
 
-// Setup graceful exit handler
 const setupExitHandler = () => {
   process.on('SIGINT', () => {
     console.log('\n\nGracefully shutting down...');
@@ -126,11 +104,6 @@ const setupExitHandler = () => {
 
 export const run = async (): Promise<void> => {
   setupExitHandler();
-
-  // Ask for phone number first if not set
-  if (!hasPhoneNumber()) {
-    await promptPhoneNumber();
-  }
-
+  await selectOrAddAccount();
   await showMenu();
 };

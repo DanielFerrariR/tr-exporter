@@ -1,13 +1,6 @@
-import { EnrichedTransaction } from '@/domain/models';
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 import { login } from '@/adapters/cli/login';
-import {
-  fetchEnrichedTransactions,
-  downloadPdfs,
-  restampDividends,
-  buildPortfolio,
-  type Step,
-} from './steps';
+import { downloadPortfolio } from '@/application/downloadPortfolio';
 
 export const handleDownloadTransactions = async (): Promise<void> => {
   try {
@@ -21,16 +14,7 @@ export const handleDownloadTransactions = async (): Promise<void> => {
     if (!phoneNumber)
       throw new Error('Phone number is not set. Please set it first.');
 
-    const steps: Step[] = [
-      fetchEnrichedTransactions(phoneNumber),
-      downloadPdfs(phoneNumber),
-      restampDividends(phoneNumber),
-      buildPortfolio(phoneNumber),
-    ];
-
-    let txs: EnrichedTransaction[] = [];
-    for (const step of steps) txs = await step(txs);
-
+    await downloadPortfolio(phoneNumber);
     console.log('Transactions downloaded successfully.');
   } catch (error) {
     console.error('Error downloading transactions:', error);

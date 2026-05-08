@@ -1,3 +1,7 @@
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
+import { parse } from 'node-html-parser';
 import {
   DividendTransaction,
   CashTransaction,
@@ -6,15 +10,9 @@ import {
   CorporateActionTransaction,
   TRANSACTION_TYPE,
 } from '@/domain/portfolio';
-import { saveFile } from '@/adapters/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/domain/constants';
-import {
-  getRemapFromIsin,
-  reloadRemapIsinsCache,
-} from '@/adapters/exporters/getExchangeFromIsin';
 import { parseToBigNumber } from '@/domain/portfolio/parseToBigNumber';
 
-// Constants
 const OUTPUT_DIRECTORY = 'build';
 const FILE_NAME = 'snowballTransactions.csv';
 const DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES = '1';
@@ -22,7 +20,6 @@ const DISABLED_PRICE_FOR_SPLIT = '1';
 const DISABLED_PRICE_FOR_STOCK_AS_DIVIDEND = '0';
 const DEFAULT_CURRENCY = 'EUR';
 
-// Event types
 const EVENT_TYPE_DIVIDEND = 'Dividend';
 const EVENT_TYPE_BUY = 'Buy';
 const EVENT_TYPE_SELL = 'Sell';
@@ -31,7 +28,6 @@ const EVENT_TYPE_CASH_EXPENSE = 'Cash_Expense';
 const EVENT_TYPE_SPLIT = 'Split';
 const EVENT_TYPE_STOCK_AS_DIVIDEND = 'Stock_As_Dividend';
 
-// Type map
 const TYPE_MAP = {
   [TRANSACTION_TYPE.BUY]: EVENT_TYPE_BUY,
   [TRANSACTION_TYPE.SELL]: EVENT_TYPE_SELL,
@@ -39,8 +35,7 @@ const TYPE_MAP = {
   [TRANSACTION_TYPE.CASH_EXPENSE]: EVENT_TYPE_CASH_EXPENSE,
 };
 
-// Headers
-export const HEADERS = [
+const HEADERS = [
   'Event',
   'Date',
   'Symbol',
@@ -54,20 +49,13 @@ export const HEADERS = [
   'Note',
 ] as const;
 
-export const escapeCsvField = (field: string): string => {
-  // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
-  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-    return `"${field.replace(/"/g, '""')}"`;
-  }
-  return field;
-};
+interface IsinRemap {
+  isin: string;
+  currency: string;
+  exchange: string;
+}
 
-export const createCsvRow = (fields: string[]): string => {
-  return fields.map((field) => escapeCsvField(field ?? '')).join(',');
-};
-
-// Transaction type handlers
-export interface CsvRowData {
+interface CsvRowData {
   event: string;
   date: string;
   symbol: string;
@@ -81,141 +69,226 @@ export interface CsvRowData {
   note: string;
 }
 
-export const isRowEmpty = (row: CsvRowData): boolean => {
-  return Object.values(row).every((field) => !field);
-};
+class SnowballAnalyticsExporter {
+  private readonly remapIsins: Record<string, IsinRemap> = {};
 
-export const handleDividend = async (
-  item: DividendTransaction,
-): Promise<CsvRowData> => {
-  // Get remap data for this ISIN
-  const remap = await getRemapFromIsin(item.isin);
+  constructor(private readonly phoneNumber: string) {
+    this.loadCache();
+  }
 
-  const exchange = remap.exchange;
-  const isin = remap.isin;
-  const currency = remap.currency;
+  private getCacheFilePath(): string {
+    return path.join(
+      process.cwd(),
+      'build',
+      this.phoneNumber,
+      'remapIsins.json',
+    );
+  }
 
-  return {
-    event: EVENT_TYPE_DIVIDEND,
-    date: item.date,
-    symbol: isin,
-    exchange,
-    note: item.title,
-    quantity: item.dividendTotal,
-    price: item.dividendPerShare,
-    currency,
-    feeTax: item.tax,
-    feeCurrency: currency,
-    doNotAdjustCash: '',
-  };
-};
+  private loadCache(): void {
+    const cacheFilePath = this.getCacheFilePath();
+    try {
+      if (fs.existsSync(cacheFilePath)) {
+        Object.assign(
+          this.remapIsins,
+          JSON.parse(fs.readFileSync(cacheFilePath, 'utf8')),
+        );
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to load ISIN remap cache from ${cacheFilePath}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
 
-export const handleOrderTransaction = async (
-  item: OrderTransaction,
-): Promise<CsvRowData[]> => {
-  // Get remap data for this ISIN
-  const remap = await getRemapFromIsin(item.isin);
+  private saveCache(): void {
+    const filePath = this.getCacheFilePath();
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(this.remapIsins, null, 2));
+  }
 
-  const exchange = remap.exchange;
-  const isin = remap.isin;
-  const currency = remap.currency;
+  private async getRemapFromIsin(isin: string): Promise<IsinRemap> {
+    if (this.remapIsins[isin]) {
+      return this.remapIsins[isin];
+    }
 
-  const rows: CsvRowData[] = [
-    {
-      event: TYPE_MAP[item.type],
+    let exchange = 'F';
+
+    const [stockResponse, etfResponse] = await Promise.allSettled([
+      axios.get(`https://www.boerse-frankfurt.de/aktie/${isin}`),
+      axios.get(`https://www.boerse-frankfurt.de/etf/${isin}`),
+    ]);
+
+    const stockData =
+      stockResponse.status === 'fulfilled' ? stockResponse.value.data : null;
+    const etfData =
+      etfResponse.status === 'fulfilled' ? etfResponse.value.data : null;
+
+    const stockExchanges = stockData
+      ? parse(stockData).getElementsByTagName('app-widget-exchange-bar')?.[0]
+          ?.children
+      : null;
+    const etfExchanges = etfData
+      ? parse(etfData).getElementsByTagName('app-widget-exchange-bar')?.[0]
+          ?.children
+      : null;
+
+    if (
+      stockExchanges?.some((item) => item?.innerText.includes('Xetra')) ||
+      etfExchanges?.some((item) => item?.innerText.includes('Xetra'))
+    ) {
+      exchange = 'XETRA';
+    }
+
+    const remap: IsinRemap = { isin, currency: 'EUR', exchange };
+    this.remapIsins[isin] = remap;
+    this.saveCache();
+
+    return remap;
+  }
+
+  private escapeCsvField(field: string): string {
+    if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+      return `"${field.replace(/"/g, '""')}"`;
+    }
+    return field;
+  }
+
+  private createCsvRow(fields: string[]): string {
+    return fields.map((field) => this.escapeCsvField(field ?? '')).join(',');
+  }
+
+  private isRowEmpty(row: CsvRowData): boolean {
+    return Object.values(row).every((field) => !field);
+  }
+
+  private async handleDividend(item: DividendTransaction): Promise<CsvRowData> {
+    const { exchange, isin, currency } = await this.getRemapFromIsin(item.isin);
+    return {
+      event: EVENT_TYPE_DIVIDEND,
       date: item.date,
       symbol: isin,
       exchange,
       note: item.title,
-      quantity: item.quantity,
-      price: item.price,
+      quantity: item.dividendTotal,
+      price: item.dividendPerShare,
       currency,
-      feeTax: item.fee,
+      feeTax: item.tax,
       feeCurrency: currency,
       doNotAdjustCash: '',
-    },
-  ];
-
-  // Create tax transaction if tax exists and is non-zero
-  if (item.tax && parseToBigNumber(item.tax).isGreaterThan(0)) {
-    rows.push({
-      event: EVENT_TYPE_CASH_EXPENSE,
-      date: item.date,
-      symbol: '',
-      exchange: '',
-      note: `${item.title} - Tax`,
-      quantity: item.tax,
-      price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
-      currency,
-      feeTax: '',
-      feeCurrency: '',
-      doNotAdjustCash: '',
-    });
+    };
   }
 
-  // Create tax correction transaction if taxCorrection exists and is non-zero
-  if (
-    item.taxCorrection &&
-    parseToBigNumber(item.taxCorrection).isGreaterThan(0)
-  ) {
-    rows.push({
-      event: EVENT_TYPE_CASH_GAIN,
-      date: item.date,
-      symbol: '',
-      exchange: '',
-      note: `${item.title} - Tax Correction`,
-      quantity: item.taxCorrection,
-      price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
-      currency,
-      feeTax: '',
-      feeCurrency: '',
-      doNotAdjustCash: '',
-    });
+  private async handleOrderTransaction(
+    item: OrderTransaction,
+  ): Promise<CsvRowData[]> {
+    const { exchange, isin, currency } = await this.getRemapFromIsin(item.isin);
+
+    const rows: CsvRowData[] = [
+      {
+        event: TYPE_MAP[item.type],
+        date: item.date,
+        symbol: isin,
+        exchange,
+        note: item.title,
+        quantity: item.quantity,
+        price: item.price,
+        currency,
+        feeTax: item.fee,
+        feeCurrency: currency,
+        doNotAdjustCash: '',
+      },
+    ];
+
+    if (item.tax && parseToBigNumber(item.tax).isGreaterThan(0)) {
+      rows.push({
+        event: EVENT_TYPE_CASH_EXPENSE,
+        date: item.date,
+        symbol: '',
+        exchange: '',
+        note: `${item.title} - Tax`,
+        quantity: item.tax,
+        price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
+        currency,
+        feeTax: '',
+        feeCurrency: '',
+        doNotAdjustCash: '',
+      });
+    }
+
+    if (
+      item.taxCorrection &&
+      parseToBigNumber(item.taxCorrection).isGreaterThan(0)
+    ) {
+      rows.push({
+        event: EVENT_TYPE_CASH_GAIN,
+        date: item.date,
+        symbol: '',
+        exchange: '',
+        note: `${item.title} - Tax Correction`,
+        quantity: item.taxCorrection,
+        price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
+        currency,
+        feeTax: '',
+        feeCurrency: '',
+        doNotAdjustCash: '',
+      });
+    }
+
+    return rows;
   }
 
-  return rows;
-};
-
-export const handleCashTransaction = (item: CashTransaction): CsvRowData => {
-  return {
-    event: TYPE_MAP[item.type],
-    date: item.date,
-    symbol: '',
-    exchange: '',
-    note: item.title,
-    quantity: item.amount,
-    price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
-    currency: DEFAULT_CURRENCY,
-    feeTax: item.tax,
-    feeCurrency: DEFAULT_CURRENCY,
-    doNotAdjustCash: '',
-  };
-};
-
-export const handleCorporateActionTransaction = async (
-  item: CorporateActionTransaction,
-): Promise<CsvRowData> => {
-  // Get remap data for this ISIN
-  const remap = await getRemapFromIsin(item.isin);
-
-  const isin = remap.isin;
-  const currency = remap.currency;
-
-  // if both values exist, then it's a split
-  if (
-    parseToBigNumber(item.debitedShares).isGreaterThan(0) &&
-    parseToBigNumber(item.creditedShares).isGreaterThan(0)
-  ) {
+  private handleCashTransaction(item: CashTransaction): CsvRowData {
     return {
-      event: EVENT_TYPE_SPLIT,
+      event: TYPE_MAP[item.type],
+      date: item.date,
+      symbol: '',
+      exchange: '',
+      note: item.title,
+      quantity: item.amount,
+      price: DISABLED_PRICE_FOR_CASH_GAIN_AND_EXPENSES,
+      currency: DEFAULT_CURRENCY,
+      feeTax: item.tax,
+      feeCurrency: DEFAULT_CURRENCY,
+      doNotAdjustCash: '',
+    };
+  }
+
+  private async handleCorporateActionTransaction(
+    item: CorporateActionTransaction,
+  ): Promise<CsvRowData> {
+    const { isin, currency } = await this.getRemapFromIsin(item.isin);
+
+    if (
+      parseToBigNumber(item.debitedShares).isGreaterThan(0) &&
+      parseToBigNumber(item.creditedShares).isGreaterThan(0)
+    ) {
+      return {
+        event: EVENT_TYPE_SPLIT,
+        date: item.date,
+        symbol: isin,
+        exchange: '',
+        note: item.title,
+        quantity: DISABLED_PRICE_FOR_SPLIT,
+        price: parseToBigNumber(item.creditedShares)
+          .dividedBy(parseToBigNumber(item.debitedShares))
+          .toFixed(),
+        currency,
+        feeTax: '',
+        feeCurrency: '',
+        doNotAdjustCash: '',
+      };
+    }
+
+    return {
+      event: EVENT_TYPE_STOCK_AS_DIVIDEND,
       date: item.date,
       symbol: isin,
       exchange: '',
       note: item.title,
-      quantity: DISABLED_PRICE_FOR_SPLIT,
-      price: parseToBigNumber(item.creditedShares)
-        .dividedBy(parseToBigNumber(item.debitedShares))
-        .toFixed(),
+      quantity: item.creditedShares,
+      price: DISABLED_PRICE_FOR_STOCK_AS_DIVIDEND,
       currency,
       feeTax: '',
       feeCurrency: '',
@@ -223,117 +296,99 @@ export const handleCorporateActionTransaction = async (
     };
   }
 
-  return {
-    event: EVENT_TYPE_STOCK_AS_DIVIDEND,
-    date: item.date,
-    symbol: isin,
-    exchange: '',
-    note: item.title,
-    quantity: item.creditedShares,
-    price: DISABLED_PRICE_FOR_STOCK_AS_DIVIDEND,
-    currency,
-    feeTax: '',
-    feeCurrency: '',
-    doNotAdjustCash: '',
-  };
-};
+  private async convertItemToCsvRow(
+    item: Portfolio[0],
+  ): Promise<CsvRowData[] | null> {
+    try {
+      if (item.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
+        return [await this.handleDividend(item)];
+      }
 
-export const convertItemToCsvRow = async (
-  item: Portfolio[0],
-): Promise<CsvRowData[] | null> => {
-  try {
-    // Dividends
-    if (item.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND) {
-      const row = await handleDividend(item);
-      return [row];
+      if (
+        item.eventType === TRANSACTION_EVENT_TYPE.TRADE ||
+        item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
+        item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
+        item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
+        item.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
+        item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
+        item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT
+      ) {
+        return await this.handleOrderTransaction(item);
+      }
+
+      if (
+        item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
+        item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
+      ) {
+        return [this.handleCashTransaction(item)];
+      }
+
+      if (item.eventType === TRANSACTION_EVENT_TYPE.CORPORATE_ACTION) {
+        return [await this.handleCorporateActionTransaction(item)];
+      }
+
+      return null;
+    } catch (error) {
+      console.error(
+        `Error converting transaction ${item.title} to CSV row:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return null;
     }
-
-    // Buy and Sell transactions (trades, savings plans, roundups and 15 euros per month bonus)
-    if (
-      item.eventType === TRANSACTION_EVENT_TYPE.TRADE ||
-      item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
-      item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
-      item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
-      item.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
-      item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
-      item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT
-    ) {
-      return await handleOrderTransaction(item);
-    }
-
-    // Cash Gain and Cash Expense
-    if (
-      item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
-      item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
-    ) {
-      const row = handleCashTransaction(item);
-      return [row];
-    }
-
-    // Split
-    if (item.eventType === TRANSACTION_EVENT_TYPE.CORPORATE_ACTION) {
-      const row = await handleCorporateActionTransaction(item);
-      return [row];
-    }
-
-    // Unhandled event types are silently ignored
-    return null;
-  } catch (error) {
-    console.error(
-      `Error converting transaction ${item.title} to CSV row:`,
-      error instanceof Error ? error.message : String(error),
-    );
-    return null;
-  }
-};
-
-export const convertTransactionsToSnowballCsv = async (
-  data: Portfolio,
-  phoneNumber: string,
-): Promise<void> => {
-  if (!data?.length) {
-    console.warn(
-      'No data provided to convert to CSV. No file will be created.',
-    );
-    return;
   }
 
-  // Reload remapIsins.json to ensure we have the most up-to-date version
-  reloadRemapIsinsCache();
+  async convert(data: Portfolio): Promise<void> {
+    if (!data?.length) {
+      console.warn(
+        'No data provided to convert to CSV. No file will be created.',
+      );
+      return;
+    }
 
-  console.log('Converting transactions to Snowball CSV format...');
+    console.log('Converting transactions to Snowball CSV format...');
 
-  // Convert all items to CSV rows in parallel (where possible)
-  // Note: getRemapFromIsin has internal caching, so parallel calls are efficient
-  const csvRowPromises = data.map(convertItemToCsvRow);
-  const csvRowResults = await Promise.all(csvRowPromises);
+    const csvRowResults = await Promise.all(
+      data.map((item) => this.convertItemToCsvRow(item)),
+    );
 
-  // Filter out null results, flatten arrays, and filter empty rows, then convert to CSV format
-  const csvRows: string[] = [HEADERS.join(',')];
-
-  for (const rowArray of csvRowResults) {
-    if (rowArray) {
-      for (const row of rowArray) {
-        if (row && !isRowEmpty(row)) {
-          const fields = [
-            row.event,
-            row.date,
-            row.symbol,
-            row.price,
-            row.quantity,
-            row.currency,
-            row.feeTax,
-            row.exchange,
-            row.feeCurrency,
-            row.doNotAdjustCash,
-            row.note,
-          ];
-          csvRows.push(createCsvRow(fields));
+    const csvRows: string[] = [HEADERS.join(',')];
+    for (const rowArray of csvRowResults) {
+      if (rowArray) {
+        for (const row of rowArray) {
+          if (row && !this.isRowEmpty(row)) {
+            csvRows.push(
+              this.createCsvRow([
+                row.event,
+                row.date,
+                row.symbol,
+                row.price,
+                row.quantity,
+                row.currency,
+                row.feeTax,
+                row.exchange,
+                row.feeCurrency,
+                row.doNotAdjustCash,
+                row.note,
+              ]),
+            );
+          }
         }
       }
     }
-  }
 
-  const csvString = csvRows.join('\n');
-  saveFile(csvString, FILE_NAME, `${OUTPUT_DIRECTORY}/${phoneNumber}`);
-};
+    const filePath = path.join(
+      process.cwd(),
+      OUTPUT_DIRECTORY,
+      this.phoneNumber,
+      FILE_NAME,
+    );
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, csvRows.join('\n'));
+    console.log(`File "${FILE_NAME}" successfully saved to ${filePath}.`);
+  }
+}
+
+export const convertTransactionsToSnowballCsv = (
+  data: Portfolio,
+  phoneNumber: string,
+): Promise<void> => new SnowballAnalyticsExporter(phoneNumber).convert(data);

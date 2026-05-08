@@ -1,4 +1,5 @@
-import { saveFile } from '@/adapters/saveFile';
+import fs from 'fs';
+import path from 'path';
 import { EnrichedActivity, EnrichedTransaction } from '@/domain/models';
 import { TradeRepublicAPI } from '@/adapters/tr';
 import {
@@ -7,8 +8,6 @@ import {
 } from '@/domain/constants';
 import { identifyActivityEventType } from '@/domain/classification/identifyActivityEventType';
 import { identifyTransactionEventType } from '@/domain/classification/identifyTransactionEventType';
-
-const OUTPUT_DIRECTORY = 'build';
 
 class FetchEnrichedTransactions {
   constructor(private readonly phoneNumber: string) {}
@@ -90,10 +89,16 @@ class FetchEnrichedTransactions {
       `Fetched ${activities.length} activities and ${rawTransactions.length} transactions.`,
     );
 
-    saveFile(
-      JSON.stringify(accountInformation, null, 2),
+    const accountInfoPath = path.join(
+      process.cwd(),
+      'build',
+      this.phoneNumber,
       'accountInformation.json',
-      `${OUTPUT_DIRECTORY}/${this.phoneNumber}`,
+    );
+    fs.mkdirSync(path.dirname(accountInfoPath), { recursive: true });
+    fs.writeFileSync(
+      accountInfoPath,
+      JSON.stringify(accountInformation, null, 2),
     );
 
     const enrichedActivities: EnrichedActivity[] = activities.map(
@@ -104,10 +109,16 @@ class FetchEnrichedTransactions {
     );
 
     console.log('All activities fetched.');
-    saveFile(
-      JSON.stringify(enrichedActivities, null, 2),
+    const activitiesPath = path.join(
+      process.cwd(),
+      'build',
+      this.phoneNumber,
       'activities.json',
-      `${OUTPUT_DIRECTORY}/${this.phoneNumber}`,
+    );
+    fs.mkdirSync(path.dirname(activitiesPath), { recursive: true });
+    fs.writeFileSync(
+      activitiesPath,
+      JSON.stringify(enrichedActivities, null, 2),
     );
 
     const classifiedTransactions: EnrichedTransaction[] = rawTransactions.map(
@@ -142,10 +153,16 @@ class FetchEnrichedTransactions {
       );
 
     console.log('All transaction details fetched.');
-    saveFile(
-      JSON.stringify(enrichedTransactions, null, 2),
+    const transactionsPath = path.join(
+      process.cwd(),
+      'build',
+      this.phoneNumber,
       'transactions.json',
-      `${OUTPUT_DIRECTORY}/${this.phoneNumber}`,
+    );
+    fs.mkdirSync(path.dirname(transactionsPath), { recursive: true });
+    fs.writeFileSync(
+      transactionsPath,
+      JSON.stringify(enrichedTransactions, null, 2),
     );
 
     return enrichedTransactions;
