@@ -8,6 +8,7 @@ import {
 } from '@/adapters/cli/menuOptions';
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 import { selectOrAddAccount } from '@/adapters/cli/accountSelection';
+import { isDebugMode } from '@/debugMode';
 
 const MENU_OPTIONS = {
   DOWNLOAD_TRANSACTIONS: 'downloadTransactions',
@@ -34,13 +35,17 @@ const showMenu = async (): Promise<void> => {
           message: 'What would you like to do?',
           choices: [
             {
-              name: 'Download Transactions',
+              name: 'Download Transactions and Build Portfolio',
               value: MENU_OPTIONS.DOWNLOAD_TRANSACTIONS,
             },
-            {
-              name: 'Build Portfolio from Transactions',
-              value: MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO,
-            },
+            ...(isDebugMode
+              ? [
+                  {
+                    name: 'Build Portfolio from Transactions',
+                    value: MENU_OPTIONS.CONVERT_TRANSACTIONS_TO_PORTFOLIO,
+                  },
+                ]
+              : []),
             {
               name: 'Export Portfolio',
               value: MENU_OPTIONS.CONVERT_TRANSACTIONS,

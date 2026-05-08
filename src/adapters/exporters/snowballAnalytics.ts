@@ -2,6 +2,7 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'node-html-parser';
+import { consola } from 'consola';
 import {
   DividendTransaction,
   CashTransaction,
@@ -95,9 +96,9 @@ class SnowballAnalyticsExporter {
         );
       }
     } catch (error) {
-      console.warn(
+      consola.warn(
         `Failed to load ISIN remap cache from ${cacheFilePath}:`,
-        error instanceof Error ? error.message : String(error),
+        error,
       );
     }
   }
@@ -329,9 +330,9 @@ class SnowballAnalyticsExporter {
 
       return null;
     } catch (error) {
-      console.error(
+      consola.error(
         `Error converting transaction ${item.title} to CSV row:`,
-        error instanceof Error ? error.message : String(error),
+        error,
       );
       return null;
     }
@@ -339,13 +340,13 @@ class SnowballAnalyticsExporter {
 
   async convert(data: Portfolio): Promise<void> {
     if (!data?.length) {
-      console.warn(
+      consola.warn(
         'No data provided to convert to CSV. No file will be created.',
       );
       return;
     }
 
-    console.log('Converting transactions to Snowball CSV format...');
+    consola.info('Converting transactions to Snowball CSV format...');
 
     const csvRowResults = await Promise.all(
       data.map((item) => this.convertItemToCsvRow(item)),
@@ -384,7 +385,7 @@ class SnowballAnalyticsExporter {
     );
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, csvRows.join('\n'));
-    console.log(`File "${FILE_NAME}" successfully saved to ${filePath}.`);
+    consola.info(`File "${FILE_NAME}" successfully saved to ${filePath}.`);
   }
 }
 

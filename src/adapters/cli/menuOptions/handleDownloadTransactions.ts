@@ -1,12 +1,13 @@
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 import { login } from '@/adapters/cli/login';
 import { downloadPortfolio } from '@/application/downloadPortfolio';
+import { consola } from 'consola';
 
 export const handleDownloadTransactions = async (): Promise<void> => {
   try {
     const wasLoginSuccessful = await login();
     if (!wasLoginSuccessful) {
-      console.error('Login failed. Please try again.');
+      consola.error('Login failed. Please try again.');
       return;
     }
 
@@ -15,8 +16,8 @@ export const handleDownloadTransactions = async (): Promise<void> => {
       throw new Error('Phone number is not set. Please set it first.');
 
     await downloadPortfolio(phoneNumber);
-    console.log('Transactions downloaded successfully.');
+    consola.info('Transactions downloaded successfully.');
   } catch (error) {
-    console.error('Error downloading transactions:', error);
+    consola.error('Error downloading transactions:', error);
   }
 };

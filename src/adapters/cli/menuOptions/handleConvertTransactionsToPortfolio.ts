@@ -6,6 +6,7 @@ import {
   restampCorrectedDividends,
 } from '@/domain/portfolio';
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
+import { consola } from 'consola';
 
 export const loadTransactions = async (): Promise<{
   transactions: EnrichedTransaction[];
@@ -14,26 +15,26 @@ export const loadTransactions = async (): Promise<{
   const phoneNumber = getPhoneNumber();
 
   if (!phoneNumber) {
-    console.error('Error: Phone number not set.');
-    console.error('Please set your phone number first.');
+    consola.error('Error: Phone number not set.');
+    consola.error('Please set your phone number first.');
     return null;
   }
 
   const transactionsPath = `build/${phoneNumber}/transactions.json`;
   if (!fs.existsSync(transactionsPath)) {
-    console.error(`Error: ${transactionsPath} not found.`);
-    console.error(
+    consola.error(`Error: ${transactionsPath} not found.`);
+    consola.error(
       'Please download transactions first using option 1 before converting.',
     );
     return null;
   }
 
   try {
-    console.log(`Reading transactions from ${transactionsPath}...`);
+    consola.info(`Reading transactions from ${transactionsPath}...`);
     const transactions = JSON.parse(fs.readFileSync(transactionsPath, 'utf8'));
     return { transactions, phoneNumber };
   } catch (error) {
-    console.error(`Error reading ${transactionsPath}:`, error);
+    consola.error(`Error reading ${transactionsPath}:`, error);
     return null;
   }
 };
@@ -45,7 +46,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
 
     const { transactions, phoneNumber } = result;
 
-    console.log('Converting transactions to portfolio data...');
+    consola.info('Converting transactions to portfolio data...');
     const restamped = await restampCorrectedDividends(
       transactions,
       phoneNumber,
@@ -60,8 +61,8 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     );
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(portfolioData, null, 2));
-    console.log('Portfolio data generated successfully.');
+    consola.info('Portfolio data generated successfully.');
   } catch (error) {
-    console.error('Error converting transactions to portfolio data:', error);
+    consola.error('Error converting transactions to portfolio data:', error);
   }
 };
