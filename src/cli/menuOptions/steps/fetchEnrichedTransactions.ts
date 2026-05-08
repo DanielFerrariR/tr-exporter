@@ -7,7 +7,7 @@ import { identifyTransactionEventType } from '@/classification/identifyTransacti
 
 const OUTPUT_DIRECTORY = 'build';
 
-class FetchEnrichedTransactionsStep {
+class FetchEnrichedTransactions {
   constructor(private readonly phoneNumber: string) {}
 
   private getGiftTransactions(
@@ -151,4 +151,4 @@ class FetchEnrichedTransactionsStep {
 
 export const fetchEnrichedTransactions =
   (phoneNumber: string) => (): Promise<EnrichedTransaction[]> =>
-    new FetchEnrichedTransactionsStep(phoneNumber).execute();
+    new FetchEnrichedTransactions(phoneNumber).execute();
