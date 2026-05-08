@@ -1,5 +1,5 @@
-import { interactiveSocketConnection } from '@/utils';
-import { login } from '@/utils/login';
+import { interactiveSocketConnection } from '@/cli/interactiveSocketConnection';
+import { login } from '@/cli/login';
 
 export const handleInteractiveSocketConnection = async (): Promise<void> => {
   try {

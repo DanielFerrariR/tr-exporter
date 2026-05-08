@@ -1,4 +1,13 @@
-import { downloadTransactions, login } from '@/utils';
+import { EnrichedTransaction } from '@/models';
+import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { login } from '@/cli/login';
+import {
+  fetchEnrichedTransactions,
+  downloadPdfs,
+  restampDividends,
+  buildPortfolio,
+  type Step,
+} from './steps';
 
 export const handleDownloadTransactions = async (): Promise<void> => {
   try {
@@ -7,7 +16,21 @@ export const handleDownloadTransactions = async (): Promise<void> => {
       console.error('Login failed. Please try again.');
       return;
     }
-    await downloadTransactions();
+
+    const phoneNumber = getPhoneNumber();
+    if (!phoneNumber)
+      throw new Error('Phone number is not set. Please set it first.');
+
+    const steps: Step[] = [
+      fetchEnrichedTransactions(phoneNumber),
+      downloadPdfs(phoneNumber),
+      restampDividends(phoneNumber),
+      buildPortfolio(phoneNumber),
+    ];
+
+    let txs: EnrichedTransaction[] = [];
+    for (const step of steps) txs = await step(txs);
+
     console.log('Transactions downloaded successfully.');
   } catch (error) {
     console.error('Error downloading transactions:', error);
