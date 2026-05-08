@@ -2,34 +2,29 @@ import { Cookie, CookieJar } from 'tough-cookie';
 import { wrapper } from 'axios-cookiejar-support';
 import axios, { AxiosInstance } from 'axios';
 import WebSocket from 'ws';
-import { LoginPayload, LoginProcessResponse } from '../auth';
+import { LoginPayload } from '../auth/LoginPayload';
+import { LoginProcessResponse } from '../auth/LoginProcessResponse';
+import { TradeRepublicApiLoginError } from '../errors/TradeRepublicApiLoginError';
+import { TradeRepublicApiLoginProcessError } from '../errors/TradeRepublicApiLoginProcessError';
+import { Subscription } from '../protocol/Subscription';
+import { SUBSCRIPTION_TYPES } from '../protocol/SubscriptionTypes';
+import { CONNECTION_STATUS } from '../protocol/ConnectionStatus';
+import { RECEIVED_COMMAND_TYPES } from '../protocol/ReceivedCommandTypes';
+import { CONNECTION_MESSAGE } from '../config/connectionMessage';
+import { TRADE_REPUBLIC_API_HEADERS } from '../config/headers';
 import {
-  TradeRepublicApiLoginError,
-  TradeRepublicApiLoginProcessError,
-} from '../errors';
-import {
-  Subscription,
-  SUBSCRIPTION_TYPES,
-  CONNECTION_STATUS,
-  RECEIVED_COMMAND_TYPES,
-} from '../protocol';
-import {
-  CONNECTION_MESSAGE,
-  TRADE_REPUBLIC_API_HEADERS,
   TRADE_REPUBLIC_API_URL,
   TRADE_REPUBLIC_WEBSOCKET_URL,
-} from '../config';
+} from '../config/urls';
 import { ConnectOptions } from './ConnectOptions';
 import { SubscriptionMessagePayloadMap } from './SubscriptionMessagePayloadMap';
 import { getOrCreateDeviceId } from './deviceIdStorage';
 import { AccountInformation } from '../account';
-import {
-  Activity,
-  ActivityResponse,
-  Transaction,
-  TransactionDetailsResponse,
-  TransactionResponse,
-} from '../timeline';
+import { Activity } from '../timeline/Activity';
+import { ActivityResponse } from '../timeline/ActivityResponse';
+import { Transaction } from '../timeline/Transaction';
+import { TransactionDetailsResponse } from '../timeline/TransactionDetailsResponse';
+import { TransactionResponse } from '../timeline/TransactionResponse';
 
 export class TradeRepublicAPI {
   private static instance: TradeRepublicAPI;

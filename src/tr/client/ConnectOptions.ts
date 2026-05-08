@@ -1,5 +1,5 @@
 import { CloseEvent, ErrorEvent } from 'ws';
-import { SplitMessage } from '../protocol';
+import { SplitMessage } from '../protocol/SplitMessage';
 
 export interface ConnectOptions {
   onOpen?: () => void;

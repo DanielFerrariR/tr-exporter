@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_TYPES } from '../protocol';
+import { SUBSCRIPTION_TYPES } from '../protocol/SubscriptionTypes';
 import { ActivityPayload } from '../timeline/ActivityPayload';
 import { TransactionDetailsPayload } from '../timeline/TransactionDetailsPayload';
 import { TransactionPayload } from '../timeline/TransactionPayload';
