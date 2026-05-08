@@ -1,114 +1,156 @@
-# TR Exporter: Export Trade Republic Transactions History
+# TR Exporter
 
-Export all your transactions from Trade Republic to be used in your portfolio tracker of your preference.
+Export your full transaction history from Trade Republic to use in the portfolio tracker of your choice.
 
-This project is not affiliated with Trade Republic Bank GmbH.
+> This project is not affiliated with Trade Republic Bank GmbH.
 
-## Supported Transactions
+## How it works
 
-The following transaction types are fully supported and will be exported:
+The tool runs as an interactive CLI with three steps:
 
-- **Trades** - Buy and sell orders (including limit orders)
-- **Savings Plans** - Automated savings plan executions
-- **Roundups** - Roundup transactions
-- **Cashback** - 15 euros per month bonus (Saveback)
-- **Dividends** - Cash dividends
-- **Interest** - Interest payments
-- **Tax Corrections** - Tax correction transactions
-- **Welcome Stock Gift** - Welcome stock gifts when opening an account
-- **Received Gift** - Received stock gifts from a friend
-- **Give Away Gift** - Received stock gifts from Trade Republic
-- **Corporate Actions** - Splits
+1. **Download** — connects to the Trade Republic API, fetches all transactions and activities, and saves them locally to `build/{phoneNumber}/transactions.json`
+2. **Build portfolio** — maps the raw transactions into a normalised portfolio format saved to `build/{phoneNumber}/portfolioData.json`
+3. **Export** — converts the portfolio data into the CSV format required by your tracker (currently Snowball Analytics)
 
-## Not Supported Transactions
+Steps 2 and 3 work offline from locally saved files, so you only need to connect to Trade Republic when downloading.
 
-The following transaction types are downloaded to `transactions.json` but are **not processed** into `portfolioData.json` or exported to portfolio trackers (e.g., Snowball Analytics):
+## Requirements
 
-- **Sent Gift** - Sent stock gifts to a friend
-- **Transfer** - Money transfers between accounts
-- **Card Payment** - Merchant card payments
-- **Status Indicator** - Declined, cancelled, or verification transactions
-- **Savings Plan for Children** - Savings plan for children
+- Node.js 20+
+- A Trade Republic account with phone number and PIN
 
-## CLI Options
+## Installation
 
-When you run `pnpm start`, you'll be prompted for your phone number (if not already set), and then you'll see an interactive menu with the following options:
+```bash
+# Clone the repository
+git clone https://github.com/DanielFerrariR/tr-exporter.git
+cd tr-exporter
 
-1. **Download Transactions** - Fetches all transactions from Trade Republic API and saves them to `build/transactions.json`
-2. **Convert Transactions to Portfolio Data** - Converts existing `build/transactions.json` to `build/portfolioData.json` (useful if you've updated transaction processing logic and want to regenerate portfolio data without refetching)
-3. **Convert Portfolio Data to Export Format** - Converts `build/portfolioData.json` to your preferred export format (e.g., Snowball Analytics CSV)
-4. **Connect to WebSocket (interact via prompt)** - Interactive WebSocket connection for debugging and testing
+# Install dependencies
+npm install
+# or
+pnpm install
 
-   **Supported Commands:**
-   - `{"type": "timelineTransactions", "after": "..."}` - List transactions (optional `after` parameter for pagination using hash from previous call)
-   - `{"type": "timelineDetailV2", "id": "timeline_id"}` - Get detailed information for a specific transaction (requires `timeline_id`)
-   - `{"type": "timelineActivityLog", "after": "..."}` - List activities (optional `after` parameter for pagination using hash from previous call)
-   - `{"type": "cash"}` - Get account information (Account ID, Currency, and Cash Balance)
+# Start the tool
+npm start
+# or
+pnpm start
+```
 
-   For additional commands, refer to the [pytr repository](https://github.com/pytr-org/pytr/blob/master/pytr/api.py).
+On first run you will be prompted for your Trade Republic phone number (including country code, e.g. `+4915...`).
 
-5. **Change Phone Number** - Update your phone number used for authentication
-6. **Exit** - Exit the application
+## Menu options
 
-**Note:** Your current phone number is displayed at the top of the menu each time it's shown.
+### 1 · Download Transactions
 
-## Features
+Authenticates with Trade Republic, downloads all transactions and activity history, and saves them to `build/{phoneNumber}/transactions.json`. You will need to:
 
-- Download transactions from Trade Republic API
-- Convert transactions to portfolio data (regenerate portfolio data from existing transactions.json)
-- Convert portfolio data to export formats (please request support for unsupported trackers):
-  - Snowball Analytics
-    - You can create a `customHoldings.json` file with the same format as `portfolioData` in `build/{phoneNumber}/customHoldings.json` and it will be included in portfolio data during CSV generation. This is useful for things like crypto transactions outside of Trade Republic.
+- Enter your 4-digit PIN
+- Approve the login request in the Trade Republic app
 
-      Example:
+### 2 · Convert Transactions to Portfolio Data
 
-      ```json
-      [
-        {
-          "title": "Bitcoin",
-          "date": "2025-10-30",
-          "eventType": "Trade",
-          "type": "Buy",
-          "isin": "BITCOIN",
-          "price": "92887.90",
-          "quantity": "0.0005383",
-          "currency": "EUR",
-          "feeTax": "0.125",
-          "exchange": "CUSTOM_HOLDING",
-          "feeCurrency": "EUR"
-        }
-      ]
-      ```
+Reads `build/{phoneNumber}/transactions.json` and builds `build/{phoneNumber}/portfolioData.json`. Useful when you want to regenerate portfolio data after updating transaction processing logic, without re-downloading from Trade Republic.
 
-    - After creation of snowballTransactions.csv, you can modify `build/{phoneNumber}/remapIsins.json` (automatically created after first run) to remap isins, currency and exchange that are shouldn't follow the current defaults. Please generate the csv again after changing `remapIsins.json`. The reason for this file is that isins can change after splits and Snowball Analytics doesn't cover all of them, so you need to use the most updated isin that is findable in their search results. Additionally, you also need to modify this file for keeping the custom transactions (like crypto ones) using their own exchange and currency.
+### 3 · Convert Portfolio Data to Export Format
 
-    Example:
+Reads `build/{phoneNumber}/portfolioData.json` and converts it to the export format of your chosen tracker. Currently supports:
 
-    ```json
-    [
-      {
-        "isin": "BITCOIN",
-        "currency": "EUR",
-        "exchange": "CUSTOM_HOLDING"
-      }
-    ]
-    ```
+- **Snowball Analytics** — generates `build/{phoneNumber}/snowballTransactions.csv`
 
-## Installation & Setup
+### 4 · Connect to WebSocket
 
-1. Install Node 20.19.0 (use the exact version to avoid errors)
+Opens a raw WebSocket connection to the Trade Republic API for debugging. Supported commands:
 
-2. Install pnpm (if not already installed): `npm install -g pnpm`
+| Command                                            | Description                                     |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `{"type": "timelineTransactions", "after": "..."}` | List transactions (omit `after` for first page) |
+| `{"type": "timelineDetailV2", "id": "..."}`        | Get details for a specific transaction          |
+| `{"type": "timelineActivityLog", "after": "..."}`  | List activities (omit `after` for first page)   |
+| `{"type": "cash"}`                                 | Account ID, currency, and cash balance          |
 
-3. Install dependencies: `pnpm install`
+For additional commands see the [pytr repository](https://github.com/pytr-org/pytr/blob/master/pytr/api.py).
 
-4. Run the application: `pnpm start`
+### 5 · Change Phone Number
 
-## Tip
+Updates the phone number used for authentication in the current session.
 
-If you liked this project and want me to keep it updated. Consider to tip any amount to:
-https://streamlabs.com/danielferrarir/tip
+## Output files
+
+All files are written to `build/{phoneNumber}/`:
+
+| File                       | Created by      | Description                               |
+| -------------------------- | --------------- | ----------------------------------------- |
+| `transactions.json`        | Download        | Raw enriched transactions from the TR API |
+| `activities.json`          | Download        | Raw activity feed from the TR API         |
+| `accountInformation.json`  | Download        | Account metadata                          |
+| `portfolioData.json`       | Build portfolio | Normalised portfolio ready for export     |
+| `snowballTransactions.csv` | Export          | Snowball Analytics import file            |
+| `remapIsins.json`          | Export          | ISIN → exchange/currency cache (editable) |
+
+## Supported transactions
+
+| Type                                 | Exported |
+| ------------------------------------ | -------- |
+| Trades (buy/sell, limit orders)      | ✅       |
+| Savings plans                        | ✅       |
+| Roundups                             | ✅       |
+| Cashback (Saveback)                  | ✅       |
+| Dividends                            | ✅       |
+| Interest                             | ✅       |
+| Tax corrections                      | ✅       |
+| Welcome stock gift                   | ✅       |
+| Received gift (from a friend)        | ✅       |
+| Give away gift (from Trade Republic) | ✅       |
+| Corporate actions (splits)           | ✅       |
+| Sent gift                            | ❌       |
+| Money transfers                      | ❌       |
+| Card payments                        | ❌       |
+| Savings plan for children            | ❌       |
+
+## Snowball Analytics configuration
+
+### Custom holdings
+
+You can include holdings from outside Trade Republic (e.g. crypto) by creating `build/{phoneNumber}/customHoldings.json` with the same format as `portfolioData.json`. These will be merged into the CSV during export.
+
+```json
+[
+  {
+    "title": "Bitcoin",
+    "date": "2025-10-30",
+    "eventType": "Trade",
+    "type": "Buy",
+    "isin": "BITCOIN",
+    "price": "92887.90",
+    "quantity": "0.0005383",
+    "currency": "EUR",
+    "feeTax": "0.125",
+    "exchange": "CUSTOM_HOLDING",
+    "feeCurrency": "EUR"
+  }
+]
+```
+
+### ISIN remapping
+
+`build/{phoneNumber}/remapIsins.json` is created automatically on first export and caches each ISIN's exchange and currency. Edit it manually when:
+
+- An ISIN changed after a stock split and Snowball Analytics only recognises the new one
+- A custom holding (like crypto) needs a specific exchange identifier
+
+After editing, run the export again to regenerate the CSV.
+
+```json
+[
+  {
+    "isin": "BITCOIN",
+    "currency": "EUR",
+    "exchange": "CUSTOM_HOLDING"
+  }
+]
+```
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/DanielFerrariR/tr2sa/blob/master/LICENSE) file for details.
+MIT — see [LICENSE](https://github.com/DanielFerrariR/tr2sa/blob/master/LICENSE).
