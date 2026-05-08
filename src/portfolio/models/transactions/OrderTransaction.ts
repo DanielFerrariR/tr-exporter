@@ -1,5 +1,5 @@
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
-import { TRANSACTION_TYPE } from './TransactionType';
+import { TRANSACTION_TYPE } from '../TransactionType';
 
 export interface OrderTransaction {
   title: string;
