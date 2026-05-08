@@ -6,13 +6,13 @@ import {
   CorporateActionTransaction,
   TRANSACTION_TYPE,
 } from '@/domain/portfolio';
-import { saveFile } from '@/utils/saveFile';
+import { saveFile } from '@/adapters/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/domain/constants';
 import {
   getRemapFromIsin,
-  parseToBigNumber,
   reloadRemapIsinsCache,
-} from '@/utils';
+} from '@/adapters/exporters/getExchangeFromIsin';
+import { parseToBigNumber } from '@/domain/portfolio/parseToBigNumber';
 
 // Constants
 const OUTPUT_DIRECTORY = 'build';

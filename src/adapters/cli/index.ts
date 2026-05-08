@@ -10,7 +10,7 @@ import {
   getPhoneNumber,
   setPhoneNumber,
   hasPhoneNumber,
-} from '@/utils/phoneNumberStorage';
+} from '@/adapters/cli/phoneNumberStorage';
 
 const MENU_OPTIONS = {
   DOWNLOAD_TRANSACTIONS: 'downloadTransactions',

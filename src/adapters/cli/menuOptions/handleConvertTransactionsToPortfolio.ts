@@ -4,8 +4,8 @@ import {
   mapTransactionsToPortfolioData,
   restampCorrectedDividends,
 } from '@/domain/portfolio';
-import { saveFile } from '@/utils/saveFile';
-import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { saveFile } from '@/adapters/saveFile';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 
 export const loadTransactions = async (): Promise<{
   transactions: EnrichedTransaction[];

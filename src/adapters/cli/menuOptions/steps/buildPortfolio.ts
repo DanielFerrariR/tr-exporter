@@ -1,4 +1,4 @@
-import { saveFile } from '@/utils/saveFile';
+import { saveFile } from '@/adapters/saveFile';
 import { EnrichedTransaction } from '@/domain/models';
 import { Portfolio } from '@/domain/portfolio';
 import { mapTransactionsToPortfolioData } from '@/domain/portfolio/mapTransactionsToPortfolioData';

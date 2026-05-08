@@ -1,5 +1,5 @@
 import { EnrichedTransaction } from '@/domain/models';
-import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 import { login } from '@/adapters/cli/login';
 import {
   fetchEnrichedTransactions,

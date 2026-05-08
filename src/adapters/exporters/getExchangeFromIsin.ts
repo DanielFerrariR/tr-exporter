@@ -2,8 +2,8 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'node-html-parser';
-import { saveFile } from '@/utils/saveFile';
-import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { saveFile } from '@/adapters/saveFile';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 
 export interface IsinRemap {
   isin: string;

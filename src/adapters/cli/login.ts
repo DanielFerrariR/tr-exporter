@@ -4,7 +4,7 @@ import {
   TradeRepublicApiLoginError,
   TradeRepublicApiLoginProcessError,
 } from '@/adapters/tr';
-import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 120000;

@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { setPhoneNumber } from '@/utils/phoneNumberStorage';
+import { setPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 
 export const handleChangePhoneNumber = async (): Promise<void> => {
   const { phoneNumber } = await inquirer.prompt([

@@ -1,4 +1,4 @@
-import { saveFile } from '@/utils/saveFile';
+import { saveFile } from '@/adapters/saveFile';
 import { EnrichedActivity, EnrichedTransaction } from '@/domain/models';
 import { TradeRepublicAPI } from '@/adapters/tr';
 import {

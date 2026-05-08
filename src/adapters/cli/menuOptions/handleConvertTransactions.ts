@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { EXPORTERS, getExporterById } from '@/adapters/exporters';
 import { Portfolio } from '@/domain/portfolio';
-import { getPhoneNumber } from '@/utils/phoneNumberStorage';
+import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
 import inquirer from 'inquirer';
 
 const loadPortfolio = async (): Promise<{
