@@ -46,7 +46,7 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
 
     saveFile(
       JSON.stringify(portfolioData, null, 2),
-      'portfolioData.json',
+      'portfolio.json',
       `build/${phoneNumber}`,
     );
     console.log('Portfolio data generated successfully.');

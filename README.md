@@ -9,7 +9,7 @@ Export your full transaction history from Trade Republic to use in the portfolio
 The tool runs as an interactive CLI with three steps:
 
 1. **Download** — connects to the Trade Republic API, fetches all transactions and activities, and saves them locally to `build/{phoneNumber}/transactions.json`
-2. **Build portfolio** — maps the raw transactions into a normalised portfolio format saved to `build/{phoneNumber}/portfolioData.json`
+2. **Build portfolio** — maps the raw transactions into a normalised portfolio format saved to `build/{phoneNumber}/portfolio.json`
 3. **Export** — converts the portfolio data into the CSV format required by your tracker (currently Snowball Analytics)
 
 Steps 2 and 3 work offline from locally saved files, so you only need to connect to Trade Republic when downloading.
@@ -50,11 +50,11 @@ Authenticates with Trade Republic, downloads all transactions and activity histo
 
 ### 2 · Convert Transactions to Portfolio Data
 
-Reads `build/{phoneNumber}/transactions.json` and builds `build/{phoneNumber}/portfolioData.json`. Useful when you want to regenerate portfolio data after updating transaction processing logic, without re-downloading from Trade Republic.
+Reads `build/{phoneNumber}/transactions.json` and builds `build/{phoneNumber}/portfolio.json`. Useful when you want to regenerate portfolio data after updating transaction processing logic, without re-downloading from Trade Republic.
 
 ### 3 · Convert Portfolio Data to Export Format
 
-Reads `build/{phoneNumber}/portfolioData.json` and converts it to the export format of your chosen tracker. Currently supports:
+Reads `build/{phoneNumber}/portfolio.json` and converts it to the export format of your chosen tracker. Currently supports:
 
 - **Snowball Analytics** — generates `build/{phoneNumber}/snowballTransactions.csv`
 
@@ -84,7 +84,7 @@ All files are written to `build/{phoneNumber}/`:
 | `transactions.json`        | Download        | Raw enriched transactions from the TR API |
 | `activities.json`          | Download        | Raw activity feed from the TR API         |
 | `accountInformation.json`  | Download        | Account metadata                          |
-| `portfolioData.json`       | Build portfolio | Normalised portfolio ready for export     |
+| `portfolio.json`           | Build portfolio | Normalised portfolio ready for export     |
 | `snowballTransactions.csv` | Export          | Snowball Analytics import file            |
 | `remapIsins.json`          | Export          | ISIN → exchange/currency cache (editable) |
 
@@ -112,7 +112,7 @@ All files are written to `build/{phoneNumber}/`:
 
 ### Custom holdings
 
-You can include holdings from outside Trade Republic (e.g. crypto) by creating `build/{phoneNumber}/customHoldings.json` with the same format as `portfolioData.json`. These will be merged into the CSV during export.
+You can include holdings from outside Trade Republic (e.g. crypto) by creating `build/{phoneNumber}/customHoldings.json` with the same format as `portfolio.json`. These will be merged into the CSV during export.
 
 ```json
 [

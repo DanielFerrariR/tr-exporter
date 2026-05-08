@@ -16,7 +16,7 @@ const loadPortfolioData = async (): Promise<{
     return null;
   }
 
-  const portfolioDataPath = `build/${phoneNumber}/portfolioData.json`;
+  const portfolioDataPath = `build/${phoneNumber}/portfolio.json`;
   if (!fs.existsSync(portfolioDataPath)) {
     console.error(`Error: ${portfolioDataPath} not found.`);
     console.error(
