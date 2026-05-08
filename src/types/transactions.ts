@@ -2,7 +2,7 @@ import { TRANSACTION_EVENT_TYPE } from '@/constants';
 
 export interface TransactionAction {
   type: string;
-  payload: string;
+  payload: string | object;
   overrideAction?: unknown;
 }
 

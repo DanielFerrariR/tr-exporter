@@ -1,6 +1,10 @@
 import fs from 'fs';
 import { Transaction } from '@/types';
-import { mapTransactionsToPortfolioData, saveFile } from '@/utils';
+import {
+  mapTransactionsToPortfolioData,
+  restampCorrectedDividends,
+  saveFile,
+} from '@/utils';
 import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
 export const loadTransactions = async (): Promise<{
@@ -42,7 +46,11 @@ export const handleConvertTransactionsToPortfolio = async (): Promise<void> => {
     const { transactions, phoneNumber } = result;
 
     console.log('Converting transactions to portfolio data...');
-    const portfolioData = mapTransactionsToPortfolioData(transactions);
+    const restamped = await restampCorrectedDividends(
+      transactions,
+      phoneNumber,
+    );
+    const portfolioData = mapTransactionsToPortfolioData(restamped);
 
     saveFile(
       JSON.stringify(portfolioData, null, 2),

@@ -7,5 +7,7 @@ export * from './identifyTransactionEventType';
 export * from './getGiftTransactions';
 export * from './interactiveSocketConnection';
 export * from './downloadTransactions';
+export * from './downloadPdfsForTransactions';
 export * from './login';
 export * from './parseToBigNumber';
+export * from './restampCorrectedDividends';
