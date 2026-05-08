@@ -1,0 +1,7 @@
+export const CONNECTION_STATUS = {
+  UNKNOWN: -1,
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSING: 2,
+  CLOSED: 3,
+};

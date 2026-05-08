@@ -5,7 +5,7 @@ import {
   PortfolioData,
   CorporateActionTransaction,
   TRANSACTION_TYPE,
-} from '@/types';
+} from '@/models';
 import { saveFile } from '@/utils/saveFile';
 import { TRANSACTION_EVENT_TYPE } from '@/constants';
 import {

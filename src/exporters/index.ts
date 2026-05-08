@@ -1,4 +1,4 @@
-import { PortfolioData } from '@/types';
+import { PortfolioData } from '@/models';
 import { convertTransactionsToSnowballCsv } from './snowballAnalytics';
 
 export interface Exporter {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { EXPORTERS, getExporterById } from '@/exporters';
-import { PortfolioData } from '@/types';
+import { PortfolioData } from '@/models';
 import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 import inquirer from 'inquirer';
 

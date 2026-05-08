@@ -1,14 +1,14 @@
 import fs from 'fs';
-import { Transaction } from '@/types';
+import { EnrichedTransaction } from '@/models';
 import {
   mapTransactionsToPortfolioData,
   restampCorrectedDividends,
-  saveFile,
-} from '@/utils';
+} from '@/portfolio';
+import { saveFile } from '@/utils/saveFile';
 import { getPhoneNumber } from '@/utils/phoneNumberStorage';
 
 export const loadTransactions = async (): Promise<{
-  transactions: Transaction[];
+  transactions: EnrichedTransaction[];
   phoneNumber: string;
 } | null> => {
   const phoneNumber = getPhoneNumber();
