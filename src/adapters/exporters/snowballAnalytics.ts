@@ -394,36 +394,29 @@ class SnowballAnalyticsExporter {
       data.map((item) => this.convertItemToCsvRow(item)),
     );
 
-    const allRows: CsvRowData[] = [];
+    const csvRows: string[] = [HEADERS.join(',')];
     for (const rowArray of csvRowResults) {
       if (rowArray) {
         for (const row of rowArray) {
           if (row && !this.isRowEmpty(row)) {
-            allRows.push(row);
+            csvRows.push(
+              this.createCsvRow([
+                row.event,
+                row.date,
+                row.symbol,
+                row.price,
+                row.quantity,
+                row.currency,
+                row.feeTax,
+                row.exchange,
+                row.feeCurrency,
+                row.doNotAdjustCash,
+                row.note,
+              ]),
+            );
           }
         }
       }
-    }
-
-    allRows.sort((a, b) => a.date.localeCompare(b.date));
-
-    const csvRows: string[] = [HEADERS.join(',')];
-    for (const row of allRows) {
-      csvRows.push(
-        this.createCsvRow([
-          row.event,
-          row.date,
-          row.symbol,
-          row.price,
-          row.quantity,
-          row.currency,
-          row.feeTax,
-          row.exchange,
-          row.feeCurrency,
-          row.doNotAdjustCash,
-          row.note,
-        ]),
-      );
     }
 
     const filePath = path.join(
