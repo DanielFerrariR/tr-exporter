@@ -383,7 +383,7 @@ const handleTaxCorrection = (
 
 const handleCorporateAction = (
   transaction: EnrichedTransaction,
-): CorporateActionTransaction => {
+): CorporateActionTransaction | CashTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -444,6 +444,27 @@ const handleCorporateAction = (
       findSubsection(transactionSection, SUBSECTION_TITLE_DEBITED_SHARES),
     ),
   ).toFixed();
+
+  // When no shares are debited but cash was exchanged, "Credited Shares" is the
+  // number of qualifying shares (not newly issued shares). Treat as a cash event.
+  if (
+    parseToBigNumber(debitedShares).isEqualTo(0) &&
+    transaction.amount?.value
+  ) {
+    const cashValue = transaction.amount.value;
+    return {
+      title: transaction.title,
+      eventType: TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+      type:
+        cashValue > 0
+          ? TRANSACTION_TYPE.CASH_GAIN
+          : TRANSACTION_TYPE.CASH_EXPENSE,
+      date,
+      amount: parseToBigNumber(Math.abs(cashValue).toString()).toFixed(),
+      currency: DEFAULT_CURRENCY,
+      tax: '0',
+    };
+  }
 
   return {
     title: transaction.title,
