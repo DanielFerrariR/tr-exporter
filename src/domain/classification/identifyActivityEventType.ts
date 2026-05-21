@@ -224,6 +224,11 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.PUK_SENT;
   }
 
+  // Customer support chat activity
+  if (trActivityType === 'CSX_CHAT_ACTIVITY') {
+    return ACTIVITY_EVENT_TYPE.SUPPORT_CHAT;
+  }
+
   // Information provided for opening secondary accounts (e.g., for children) (TR event type is null)
   if (
     activity.title.startsWith('Open ') &&

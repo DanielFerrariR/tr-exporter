@@ -39,4 +39,5 @@ export enum ACTIVITY_EVENT_TYPE {
   CURRENT_ACCOUNT = 'Current Account', // Generic current account related updates
   PUK_SENT = 'PUK Sent', // Dispatch of the Personal Unblocking Key
   OPEN_ACCOUNT_PROVIDED = 'Open Account Provided', // Information provided for opening secondary accounts
+  SUPPORT_CHAT = 'Support Chat', // Customer support chat activity
 }
