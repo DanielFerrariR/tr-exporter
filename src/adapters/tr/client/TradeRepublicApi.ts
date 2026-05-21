@@ -87,6 +87,28 @@ export class TradeRepublicAPI {
     }
   }
 
+  public async submitAuthenticatorCode(
+    processId: string,
+    code: string,
+  ): Promise<void> {
+    try {
+      await this._client.post(
+        `/api/v2/auth/web/login/processes/${processId}/authenticator-verification`,
+        { code },
+        { headers: { 'x-tr-device-info': this._buildDeviceInfoHeader() } },
+      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new TradeRepublicApiLoginProcessError(
+          error.message,
+          error.response?.data,
+        );
+      }
+
+      throw error;
+    }
+  }
+
   public async pollLoginProcess(
     processId: string,
   ): Promise<LoginProcessResponse> {

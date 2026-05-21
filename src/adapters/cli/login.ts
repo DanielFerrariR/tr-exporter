@@ -42,9 +42,6 @@ export async function login(): Promise<boolean> {
     }
 
     processId = response.data.processId;
-    console.log(
-      'Please approve the login request in your Trade Republic app...',
-    );
   } catch (error: unknown) {
     if (error instanceof TradeRepublicApiLoginError) {
       console.error(`Error during login: ${error.message}`);
@@ -59,6 +56,7 @@ export async function login(): Promise<boolean> {
     return false;
   }
 
+  let authenticatorCodeSubmitted = false;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
@@ -83,7 +81,30 @@ export async function login(): Promise<boolean> {
         return false;
       }
 
-      // PENDING — keep polling
+      if (
+        result.requiredAction === 'AUTHENTICATOR_VERIFICATION' &&
+        !authenticatorCodeSubmitted
+      ) {
+        const code = readlineSync.question(
+          'Please enter the 6-digit code from your authenticator app: ',
+          { hideEchoBack: false },
+        );
+        await TradeRepublicAPI.getInstance().submitAuthenticatorCode(
+          processId,
+          code,
+        );
+        authenticatorCodeSubmitted = true;
+        console.log(
+          'Please approve the login request in your Trade Republic app...',
+        );
+        continue;
+      }
+
+      if (!authenticatorCodeSubmitted) {
+        console.log(
+          'Please approve the login request in your Trade Republic app...',
+        );
+      }
     } catch (error: unknown) {
       if (error instanceof TradeRepublicApiLoginProcessError) {
         console.error(`Error polling login status: ${error.message}`);
