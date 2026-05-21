@@ -106,6 +106,10 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.STATUS_INDICATOR;
   }
 
+  if (transaction.eventType === 'CORPORATE_ACTION') {
+    return TRANSACTION_EVENT_TYPE.CORPORATE_ACTION;
+  }
+
   // Card payments: subtitle is null AND title is not a portfolio-related title
   // Portfolio-related titles with null subtitle: "Interest", "Tax correction"
   if (transaction.subtitle === null) {
