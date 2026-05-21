@@ -96,6 +96,7 @@ export const identifyTransactionEventType = (
   if (
     transaction.subtitle === 'Declined' ||
     transaction.subtitle === 'Cancelled' ||
+    transaction.subtitle === 'Failed' ||
     transaction.subtitle === 'Card verification' ||
     transaction.subtitle === 'Savings failed' ||
     transaction.subtitle === 'Saving failed' ||
