@@ -106,7 +106,10 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.STATUS_INDICATOR;
   }
 
-  if (transaction.eventType === 'CORPORATE_ACTION') {
+  if (
+    transaction.eventType === 'CORPORATE_ACTION' ||
+    transaction.eventType === 'SHAREBOOKING_TRANSACTIONAL'
+  ) {
     return TRANSACTION_EVENT_TYPE.CORPORATE_ACTION;
   }
 
