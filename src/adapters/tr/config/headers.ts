@@ -1,4 +1,4 @@
-export const TR_APP_VERSION = '15.6.4';
+export const TR_APP_VERSION = '15.7.0';
 
 export const TRADE_REPUBLIC_API_HEADERS = {
   'User-Agent':
