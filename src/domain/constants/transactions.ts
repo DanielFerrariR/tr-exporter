@@ -11,6 +11,7 @@ export enum TRANSACTION_EVENT_TYPE {
   WELCOME_STOCK_GIFT = 'Welcome Stock Gift', // Welcome stock gifts when opening an account
   GIVE_AWAY_GIFT = 'Give Away Gift', // Give away stock gifts from Trade Republic
   CORPORATE_ACTION = 'Corporate Action', // Corporate actions that change the number of shares held
+  ISIN_CHANGE = 'ISIN Change', // Corporate events that replace one ISIN with another (e.g. reverse splits)
 
   // Non-portfolio-related transactions
   SENT_GIFT = 'Sent Gift', // Sent stock gifts to a friend

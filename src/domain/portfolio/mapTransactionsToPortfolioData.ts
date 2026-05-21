@@ -12,6 +12,7 @@ import {
   OrderTransaction,
   Portfolio,
   CorporateActionTransaction,
+  IsinChangeTransaction,
   TRANSACTION_TYPE,
 } from './index';
 import { identifyBuyOrSell } from '@/domain/classification/identifyBuyOrSell';
@@ -383,7 +384,7 @@ const handleTaxCorrection = (
 
 const handleCorporateAction = (
   transaction: EnrichedTransaction,
-): CorporateActionTransaction | CashTransaction => {
+): CorporateActionTransaction | CashTransaction | IsinChangeTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -444,6 +445,33 @@ const handleCorporateAction = (
       findSubsection(transactionSection, SUBSECTION_TITLE_DEBITED_SHARES),
     ),
   ).toFixed();
+
+  // Detect ISIN change: header section icon carries the new ISIN after a reverse/
+  // forward split that retires the old security and creates a new one.
+  const headerSection = findHeaderSection(transaction.sections);
+  const rawHeaderIcon = headerSection?.data?.icon;
+  if (rawHeaderIcon) {
+    const headerIconStr =
+      typeof rawHeaderIcon === 'object' ? rawHeaderIcon.asset : rawHeaderIcon;
+    const headerIsin = extractIsinFromIcon(headerIconStr);
+    if (
+      headerIsin &&
+      headerIsin !== isin &&
+      headerIsin !== 'timeline_refresh' &&
+      (parseToBigNumber(debitedShares).isGreaterThan(0) ||
+        parseToBigNumber(creditedShares).isGreaterThan(0))
+    ) {
+      return {
+        title: transaction.title,
+        eventType: TRANSACTION_EVENT_TYPE.ISIN_CHANGE,
+        date,
+        oldIsin: isin,
+        newIsin: headerIsin,
+        oldShares: debitedShares,
+        newShares: creditedShares,
+      };
+    }
+  }
 
   // When no shares are debited but cash was exchanged, "Credited Shares" is the
   // number of qualifying shares (not newly issued shares). Treat as a cash event.
@@ -538,6 +566,7 @@ export const mapTransactionsToPortfolioData = (
           break;
 
         case TRANSACTION_EVENT_TYPE.CORPORATE_ACTION:
+        case TRANSACTION_EVENT_TYPE.ISIN_CHANGE:
           portfolioData.push(handleCorporateAction(transaction));
           break;
 

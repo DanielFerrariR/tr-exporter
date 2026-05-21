@@ -56,7 +56,10 @@ class FetchEnrichedTransactions {
       .filter(
         (activity) =>
           !!activity.eventType &&
-          [ACTIVITY_EVENT_TYPE.CORPORATE_ACTION].includes(activity.eventType),
+          [
+            ACTIVITY_EVENT_TYPE.CORPORATE_ACTION,
+            ACTIVITY_EVENT_TYPE.CASH_OR_STOCK,
+          ].includes(activity.eventType),
       )
       .map((activity) => ({
         id: activity.id,
