@@ -96,12 +96,21 @@ export const identifyTransactionEventType = (
   if (
     transaction.subtitle === 'Declined' ||
     transaction.subtitle === 'Cancelled' ||
+    transaction.subtitle === 'Failed' ||
+    transaction.subtitle === 'Refunded' ||
     transaction.subtitle === 'Card verification' ||
     transaction.subtitle === 'Savings failed' ||
     transaction.subtitle === 'Saving failed' ||
     transaction.subtitle?.toLowerCase().includes('canceled')
   ) {
     return TRANSACTION_EVENT_TYPE.STATUS_INDICATOR;
+  }
+
+  if (
+    transaction.eventType === 'CORPORATE_ACTION' ||
+    transaction.eventType === 'SHAREBOOKING_TRANSACTIONAL'
+  ) {
+    return TRANSACTION_EVENT_TYPE.CORPORATE_ACTION;
   }
 
   // Card payments: subtitle is null AND title is not a portfolio-related title

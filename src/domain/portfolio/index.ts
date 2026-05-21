@@ -6,3 +6,4 @@ export * from './models/transactions/OrderTransaction';
 export * from './models/transactions/DividendTransaction';
 export * from './models/transactions/CashTransaction';
 export * from './models/transactions/CorporateActionTransaction';
+export * from './models/transactions/IsinChangeTransaction';

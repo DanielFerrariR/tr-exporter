@@ -9,6 +9,7 @@ import {
   OrderTransaction,
   Portfolio,
   CorporateActionTransaction,
+  IsinChangeTransaction,
   TRANSACTION_TYPE,
 } from '@/domain/portfolio';
 import { TRANSACTION_EVENT_TYPE } from '@/domain/constants';
@@ -256,6 +257,43 @@ class SnowballAnalyticsExporter {
     };
   }
 
+  private async handleIsinChangeTransaction(
+    item: IsinChangeTransaction,
+  ): Promise<CsvRowData[]> {
+    const { isin: oldIsin } = await this.getRemapFromIsin(item.oldIsin);
+    const { isin: newIsin } = await this.getRemapFromIsin(item.newIsin);
+    // Both rows use DoNotAdjustCash so the cash balance is not distorted by
+    // this corporate restructuring event.
+    return [
+      {
+        event: EVENT_TYPE_SELL,
+        date: item.date,
+        symbol: oldIsin,
+        exchange: '',
+        note: `${item.title} - ISIN change (old)`,
+        quantity: item.oldShares,
+        price: '0',
+        currency: DEFAULT_CURRENCY,
+        feeTax: '',
+        feeCurrency: '',
+        doNotAdjustCash: '1',
+      },
+      {
+        event: EVENT_TYPE_BUY,
+        date: item.date,
+        symbol: newIsin,
+        exchange: '',
+        note: `${item.title} - ISIN change (new)`,
+        quantity: item.newShares,
+        price: '0',
+        currency: DEFAULT_CURRENCY,
+        feeTax: '',
+        feeCurrency: '',
+        doNotAdjustCash: '1',
+      },
+    ];
+  }
+
   private async handleCorporateActionTransaction(
     item: CorporateActionTransaction,
   ): Promise<CsvRowData> {
@@ -326,6 +364,10 @@ class SnowballAnalyticsExporter {
 
       if (item.eventType === TRANSACTION_EVENT_TYPE.CORPORATE_ACTION) {
         return [await this.handleCorporateActionTransaction(item)];
+      }
+
+      if (item.eventType === TRANSACTION_EVENT_TYPE.ISIN_CHANGE) {
+        return await this.handleIsinChangeTransaction(item);
       }
 
       return null;

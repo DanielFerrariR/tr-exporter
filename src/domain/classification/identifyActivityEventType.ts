@@ -66,7 +66,10 @@ export const identifyActivityEventType = (
     return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_CREATED;
   }
 
-  if (trActivityType === 'ORDER_EXPIRED') {
+  if (
+    trActivityType === 'ORDER_EXPIRED' ||
+    trActivityType === 'TRADING_ORDER_EXPIRED'
+  ) {
     return ACTIVITY_EVENT_TYPE.LIMIT_ORDER_EXPIRED;
   }
 

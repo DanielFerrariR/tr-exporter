@@ -12,6 +12,7 @@ import {
   OrderTransaction,
   Portfolio,
   CorporateActionTransaction,
+  IsinChangeTransaction,
   TRANSACTION_TYPE,
 } from './index';
 import { identifyBuyOrSell } from '@/domain/classification/identifyBuyOrSell';
@@ -381,9 +382,86 @@ const handleTaxCorrection = (
   };
 };
 
+// Pre-scan all transactions to resolve the new ISIN for split events where
+// TR does not include the new ISIN in the corporate action detail. Matches
+// by finding ISINs that only appear in sell transactions (no buys) for the
+// same company title after the split date.
+const resolveIsinChanges = (
+  transactions: EnrichedTransaction[],
+): Map<string, string> => {
+  const result = new Map<string, string>(); // transactionId -> newIsin
+
+  const buyIsinsByTitle = new Map<string, Set<string>>();
+  const sellIsinsByTitle = new Map<string, Map<string, string>>(); // title -> isin -> first date
+
+  for (const t of transactions) {
+    if (t.status === 'CANCELED' || t.eventType !== TRANSACTION_EVENT_TYPE.TRADE)
+      continue;
+    let isin: string;
+    try {
+      isin = extractIsinFromIcon(t.icon);
+    } catch {
+      continue;
+    }
+    if (t.subtitle === 'Buy Order' || t.subtitle === 'Limit Buy') {
+      if (!buyIsinsByTitle.has(t.title))
+        buyIsinsByTitle.set(t.title, new Set());
+      buyIsinsByTitle.get(t.title)!.add(isin);
+    } else if (t.subtitle === 'Sell Order' || t.subtitle === 'Limit Sell') {
+      if (!sellIsinsByTitle.has(t.title))
+        sellIsinsByTitle.set(t.title, new Map());
+      if (!sellIsinsByTitle.get(t.title)!.has(isin))
+        sellIsinsByTitle.get(t.title)!.set(isin, t.timestamp);
+    }
+  }
+
+  for (const t of transactions) {
+    if (
+      t.eventType !== TRANSACTION_EVENT_TYPE.CORPORATE_ACTION &&
+      t.eventType !== TRANSACTION_EVENT_TYPE.ISIN_CHANGE
+    )
+      continue;
+    const overviewSection = findTableSection(
+      t.sections,
+      SECTION_TITLE_OVERVIEW,
+    );
+    if (!overviewSection) continue;
+    if (
+      !findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED) ||
+      !findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED)
+    )
+      continue;
+
+    let oldIsin: string;
+    try {
+      oldIsin = extractIsinFromIcon(t.icon);
+    } catch {
+      continue;
+    }
+
+    const sellIsins =
+      sellIsinsByTitle.get(t.title) ?? new Map<string, string>();
+    const buyIsins = buyIsinsByTitle.get(t.title) ?? new Set<string>();
+
+    for (const [sellIsin, firstSellDate] of sellIsins) {
+      if (
+        sellIsin !== oldIsin &&
+        !buyIsins.has(sellIsin) &&
+        firstSellDate > t.timestamp
+      ) {
+        result.set(t.id, sellIsin);
+        break;
+      }
+    }
+  }
+
+  return result;
+};
+
 const handleCorporateAction = (
   transaction: EnrichedTransaction,
-): CorporateActionTransaction => {
+  isinChangeMap: Map<string, string>,
+): CorporateActionTransaction | CashTransaction | IsinChangeTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -395,22 +473,38 @@ const handleCorporateAction = (
     isin = transaction.title;
   }
 
-  // New format
+  // Overview section format: used by split events (stock splits, reverse splits)
   const overviewSection = findTableSection(
     transaction.sections,
     SECTION_TITLE_OVERVIEW,
   );
-  if (overviewSection && transaction.subtitle === 'Stock Split') {
+  const overviewSharesAdded = overviewSection
+    ? findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED)
+    : undefined;
+  const overviewSharesRemoved = overviewSection
+    ? findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED)
+    : undefined;
+
+  if (overviewSection && overviewSharesAdded && overviewSharesRemoved) {
     const sharesAdded = parseToBigNumber(
-      getDetailText(
-        findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED),
-      ),
+      getDetailText(overviewSharesAdded),
     ).toFixed();
     const sharesRemoved = parseToBigNumber(
-      getDetailText(
-        findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED),
-      ),
+      getDetailText(overviewSharesRemoved),
     ).toFixed();
+
+    const newIsin = isinChangeMap.get(transaction.id);
+    if (newIsin) {
+      return {
+        title: transaction.title,
+        eventType: TRANSACTION_EVENT_TYPE.ISIN_CHANGE,
+        date,
+        oldIsin: isin,
+        newIsin,
+        oldShares: sharesRemoved,
+        newShares: sharesAdded,
+      };
+    }
 
     return {
       title: `${transaction.title} - Corporate Action`,
@@ -445,6 +539,54 @@ const handleCorporateAction = (
     ),
   ).toFixed();
 
+  // Detect ISIN change via header section icon (fallback for events where TR
+  // exposes the new ISIN directly in the detail header).
+  const headerSection = findHeaderSection(transaction.sections);
+  const rawHeaderIcon = headerSection?.data?.icon;
+  if (rawHeaderIcon) {
+    const headerIconStr =
+      typeof rawHeaderIcon === 'object' ? rawHeaderIcon.asset : rawHeaderIcon;
+    const headerIsin = extractIsinFromIcon(headerIconStr);
+    if (
+      headerIsin &&
+      headerIsin !== isin &&
+      headerIsin !== 'timeline_refresh' &&
+      (parseToBigNumber(debitedShares).isGreaterThan(0) ||
+        parseToBigNumber(creditedShares).isGreaterThan(0))
+    ) {
+      return {
+        title: transaction.title,
+        eventType: TRANSACTION_EVENT_TYPE.ISIN_CHANGE,
+        date,
+        oldIsin: isin,
+        newIsin: headerIsin,
+        oldShares: debitedShares,
+        newShares: creditedShares,
+      };
+    }
+  }
+
+  // When no shares are debited but cash was exchanged, "Credited Shares" is the
+  // number of qualifying shares (not newly issued shares). Treat as a cash event.
+  if (
+    parseToBigNumber(debitedShares).isEqualTo(0) &&
+    transaction.amount?.value
+  ) {
+    const cashValue = transaction.amount.value;
+    return {
+      title: transaction.title,
+      eventType: TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+      type:
+        cashValue > 0
+          ? TRANSACTION_TYPE.CASH_GAIN
+          : TRANSACTION_TYPE.CASH_EXPENSE,
+      date,
+      amount: parseToBigNumber(Math.abs(cashValue).toString()).toFixed(),
+      currency: DEFAULT_CURRENCY,
+      tax: '0',
+    };
+  }
+
   return {
     title: transaction.title,
     eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.CORPORATE_ACTION,
@@ -466,6 +608,7 @@ export const mapTransactionsToPortfolioData = (
   }
 
   const portfolioData: Portfolio = [];
+  const isinChangeMap = resolveIsinChanges(transactions);
 
   for (const transaction of transactions) {
     try {
@@ -517,7 +660,8 @@ export const mapTransactionsToPortfolioData = (
           break;
 
         case TRANSACTION_EVENT_TYPE.CORPORATE_ACTION:
-          portfolioData.push(handleCorporateAction(transaction));
+        case TRANSACTION_EVENT_TYPE.ISIN_CHANGE:
+          portfolioData.push(handleCorporateAction(transaction, isinChangeMap));
           break;
 
         default:

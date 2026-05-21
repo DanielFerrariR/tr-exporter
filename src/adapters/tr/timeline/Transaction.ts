@@ -16,5 +16,6 @@ export interface Transaction {
   cashAccountNumber: string | null;
   hidden: boolean;
   deleted: boolean;
+  eventType?: string;
   sections?: TransactionSection[];
 }
