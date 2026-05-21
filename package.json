@@ -5,6 +5,7 @@
   "scripts": {
     "prepare": "husky",
     "start": "tsx src/index.ts",
+    "start:debug": "tsx src/index.ts --debug",
     "format": "prettier --write .",
     "check": "prettier --check .",
     "lint": "eslint . --ext .js,.mjs,.cjs,.ts,.mts,.cts",
