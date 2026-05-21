@@ -18,6 +18,16 @@ import {
 import { identifyBuyOrSell } from '@/domain/classification/identifyBuyOrSell';
 import { parseToBigNumber } from '@/domain/portfolio/parseToBigNumber';
 
+/** A corporate action record that carries no financial data for the portfolio —
+ * e.g. dividend election notices, cash dividend summaries that are already
+ * recorded as a separate Dividend transaction, or informational notices. */
+type InformationalCorporateAction = {
+  eventType: 'informational_corporate_action';
+};
+const INFORMATIONAL_CORPORATE_ACTION: InformationalCorporateAction = {
+  eventType: 'informational_corporate_action',
+};
+
 const DEFAULT_EXCHANGE = 'LSX';
 const DEFAULT_CURRENCY = 'EUR';
 const SECTION_TITLE_TRANSACTION = 'Transaction';
@@ -461,7 +471,11 @@ const resolveIsinChanges = (
 const handleCorporateAction = (
   transaction: EnrichedTransaction,
   isinChangeMap: Map<string, string>,
-): CorporateActionTransaction | CashTransaction | IsinChangeTransaction => {
+):
+  | CorporateActionTransaction
+  | CashTransaction
+  | IsinChangeTransaction
+  | InformationalCorporateAction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
   }
@@ -523,9 +537,7 @@ const handleCorporateAction = (
   );
 
   if (!transactionSection) {
-    throw Error(
-      `Missing Overview and Transaction section in corporate action: ${transaction.id}`,
-    );
+    return INFORMATIONAL_CORPORATE_ACTION;
   }
 
   const creditedShares = parseToBigNumber(
@@ -660,9 +672,18 @@ export const mapTransactionsToPortfolioData = (
           break;
 
         case TRANSACTION_EVENT_TYPE.CORPORATE_ACTION:
-        case TRANSACTION_EVENT_TYPE.ISIN_CHANGE:
-          portfolioData.push(handleCorporateAction(transaction, isinChangeMap));
+        case TRANSACTION_EVENT_TYPE.ISIN_CHANGE: {
+          const corporateActionResult = handleCorporateAction(
+            transaction,
+            isinChangeMap,
+          );
+          if (
+            corporateActionResult.eventType !== 'informational_corporate_action'
+          ) {
+            portfolioData.push(corporateActionResult);
+          }
           break;
+        }
 
         default:
           // Unhandled event types are silently ignored
