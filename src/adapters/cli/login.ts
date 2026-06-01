@@ -5,6 +5,7 @@ import {
   TradeRepublicApiLoginProcessError,
 } from '@/adapters/tr';
 import { getPhoneNumber } from '@/adapters/cli/phoneNumberStorage';
+import { startSpinner } from '@/adapters/cli/spinner';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 120000;
@@ -57,67 +58,77 @@ export async function login(): Promise<boolean> {
   }
 
   let authenticatorCodeSubmitted = false;
+  let appApprovalMessageShown = false;
+  let stopSpinner: (() => void) | null = null;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
-  while (Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  try {
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-    try {
-      const result =
-        await TradeRepublicAPI.getInstance().pollLoginProcess(processId);
+      try {
+        const result =
+          await TradeRepublicAPI.getInstance().pollLoginProcess(processId);
 
-      if (result.status === 'CONFIRMED') {
-        console.log('Login successful.');
-        return true;
-      }
+        if (result.status === 'CONFIRMED') {
+          stopSpinner?.();
+          console.log('Login successful.');
+          return true;
+        }
 
-      if (result.status === 'DENIED') {
-        console.error('Login was denied in the app.');
+        if (result.status === 'DENIED') {
+          stopSpinner?.();
+          console.error('Login was denied in the app.');
+          return false;
+        }
+
+        if (result.status === 'EXPIRED') {
+          stopSpinner?.();
+          console.error('Login request expired. Please try again.');
+          return false;
+        }
+
+        if (
+          result.requiredAction === 'AUTHENTICATOR_VERIFICATION' &&
+          !authenticatorCodeSubmitted
+        ) {
+          stopSpinner?.();
+          stopSpinner = null;
+          const code = readlineSync.question(
+            'Please enter the 6-digit code from your authenticator app: ',
+            { hideEchoBack: false },
+          );
+          await TradeRepublicAPI.getInstance().submitAuthenticatorCode(
+            processId,
+            code,
+          );
+          authenticatorCodeSubmitted = true;
+        }
+
+        if (!appApprovalMessageShown) {
+          appApprovalMessageShown = true;
+          console.log(
+            'Please approve the login request in your Trade Republic app...',
+          );
+          stopSpinner = startSpinner('Waiting for app approval...');
+        }
+      } catch (error: unknown) {
+        stopSpinner?.();
+        if (error instanceof TradeRepublicApiLoginProcessError) {
+          console.error(`Error polling login status: ${error.message}`);
+          console.error('Response data:', error.responseData);
+        } else if (error instanceof Error) {
+          console.error(
+            `An unexpected error occurred while polling: ${error.message}`,
+          );
+        } else {
+          console.error('An unexpected error occurred while polling:', error);
+        }
         return false;
       }
-
-      if (result.status === 'EXPIRED') {
-        console.error('Login request expired. Please try again.');
-        return false;
-      }
-
-      if (
-        result.requiredAction === 'AUTHENTICATOR_VERIFICATION' &&
-        !authenticatorCodeSubmitted
-      ) {
-        const code = readlineSync.question(
-          'Please enter the 6-digit code from your authenticator app: ',
-          { hideEchoBack: false },
-        );
-        await TradeRepublicAPI.getInstance().submitAuthenticatorCode(
-          processId,
-          code,
-        );
-        authenticatorCodeSubmitted = true;
-        console.log(
-          'Please approve the login request in your Trade Republic app...',
-        );
-        continue;
-      }
-
-      if (!authenticatorCodeSubmitted) {
-        console.log(
-          'Please approve the login request in your Trade Republic app...',
-        );
-      }
-    } catch (error: unknown) {
-      if (error instanceof TradeRepublicApiLoginProcessError) {
-        console.error(`Error polling login status: ${error.message}`);
-        console.error('Response data:', error.responseData);
-      } else if (error instanceof Error) {
-        console.error(
-          `An unexpected error occurred while polling: ${error.message}`,
-        );
-      } else {
-        console.error('An unexpected error occurred while polling:', error);
-      }
-      return false;
     }
+  } finally {
+    stopSpinner?.();
   }
 
   console.error(
