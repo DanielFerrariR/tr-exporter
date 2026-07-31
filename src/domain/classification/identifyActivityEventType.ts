@@ -200,7 +200,10 @@ export const identifyActivityEventType = (
   }
 
   // Availability of the quarterly account statement
-  if (trActivityType === 'QUARTERLY_REPORT') {
+  if (
+    trActivityType === 'QUARTERLY_REPORT' ||
+    trActivityType === 'QUARTERLY_NET_WORTH_STATEMENT_CREATED'
+  ) {
     return ACTIVITY_EVENT_TYPE.QUARTERLY_REPORT;
   }
 
