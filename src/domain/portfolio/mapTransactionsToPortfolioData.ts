@@ -1,4 +1,4 @@
-import { TRANSACTION_EVENT_TYPE } from '@/domain/constants';
+import { TRANSACTION_EVENT_TYPE, getTimelineLabels } from '@/domain/constants';
 import {
   TransactionDataObject,
   TransactionHeaderSection,
@@ -23,24 +23,34 @@ import {
 import { identifyBuyOrSell } from '@/domain/classification/identifyBuyOrSell';
 import { parseToBigNumber } from '@/domain/portfolio/parseToBigNumber';
 
-const CA_HEADER_DIVIDEND_NOTIFICATION = 'Cash dividend';
-const CA_HEADER_DIVIDEND_ELECTION = 'You have an upcoming dividend payment';
-const CA_HEADER_INFORMATIONAL_NOTICE = 'You received a corporate action';
-
 const DEFAULT_EXCHANGE = 'LSX';
 const DEFAULT_CURRENCY = 'EUR';
-const SECTION_TITLE_TRANSACTION = 'Transaction';
-const SECTION_TITLE_OVERVIEW = 'Overview';
-const SUBSECTION_TITLE_SHARES = 'Shares';
-const SUBSECTION_TITLE_SHARE_PRICE = 'Share price';
-const SUBSECTION_TITLE_SHARES_ADDED = 'Shares added';
-const SUBSECTION_TITLE_SHARES_REMOVED = 'Shares removed'; // No info if this is the correct name
-const SUBSECTION_TITLE_CREDITED_SHARES = 'Credited Shares';
-const SUBSECTION_TITLE_DEBITED_SHARES = 'Debited Shares';
-const SUBSECTION_TITLE_TAX = 'Tax';
-const SUBSECTION_TITLE_TAX_CORRECTION = 'Tax Correction';
-const SUBSECTION_TITLE_FEE = 'Fee';
-const SUBSECTION_TITLE_TOTAL = 'Total';
+const SECTION_TITLES_TRANSACTION = getTimelineLabels(
+  (d) => d.sections.transaction,
+);
+const SECTION_TITLES_OVERVIEW = getTimelineLabels((d) => d.sections.overview);
+const SUBSECTION_TITLES_SHARES = getTimelineLabels((d) => d.subsections.shares);
+const SUBSECTION_TITLES_SHARE_PRICE = getTimelineLabels(
+  (d) => d.subsections.sharePrice,
+);
+const SUBSECTION_TITLES_SHARES_ADDED = getTimelineLabels(
+  (d) => d.subsections.sharesAdded,
+);
+const SUBSECTION_TITLES_SHARES_REMOVED = getTimelineLabels(
+  (d) => d.subsections.sharesRemoved,
+);
+const SUBSECTION_TITLES_CREDITED_SHARES = getTimelineLabels(
+  (d) => d.subsections.creditedShares,
+);
+const SUBSECTION_TITLES_DEBITED_SHARES = getTimelineLabels(
+  (d) => d.subsections.debitedShares,
+);
+const SUBSECTION_TITLES_TAX = getTimelineLabels((d) => d.subsections.tax);
+const SUBSECTION_TITLES_TAX_CORRECTION = getTimelineLabels(
+  (d) => d.subsections.taxCorrection,
+);
+const SUBSECTION_TITLES_FEE = getTimelineLabels((d) => d.subsections.fee);
+const SUBSECTION_TITLES_TOTAL = getTimelineLabels((d) => d.subsections.total);
 
 const extractIsinFromIcon = (icon: string): string => {
   const parts = icon.split('/');
@@ -60,19 +70,26 @@ const getDetailText = (
 
 const findSubsection = (
   tableSection: TransactionTableSection,
-  title: string,
+  titleOrTitles: string | string[],
 ) => {
-  return tableSection.data.find((subSection) => subSection.title === title);
+  const titles = Array.isArray(titleOrTitles) ? titleOrTitles : [titleOrTitles];
+  return tableSection.data.find((subSection) =>
+    titles.includes(subSection.title),
+  );
 };
 
 const findTableSection = (
   sections: TransactionSection[] | undefined,
-  sectionTitle: string,
+  sectionTitleOrTitles: string | string[],
 ): TransactionTableSection | undefined => {
+  const titles = Array.isArray(sectionTitleOrTitles)
+    ? sectionTitleOrTitles
+    : [sectionTitleOrTitles];
   return sections?.find(
     (section): section is TransactionTableSection =>
       'title' in section &&
-      section.title === sectionTitle &&
+      section.title !== undefined &&
+      titles.includes(section.title) &&
       section.type === 'table',
   );
 };
@@ -108,7 +125,7 @@ const handleDividend = (
   const isin = extractIsinFromIcon(transaction.icon);
   const transactionSection = findTableSection(
     transaction.sections,
-    SECTION_TITLE_TRANSACTION,
+    SECTION_TITLES_TRANSACTION,
   );
 
   if (!transactionSection) {
@@ -119,15 +136,15 @@ const handleDividend = (
 
   const sharesSubSection = findSubsection(
     transactionSection,
-    SUBSECTION_TITLE_SHARES,
+    SUBSECTION_TITLES_SHARES,
   );
   const taxSubSection = findSubsection(
     transactionSection,
-    SUBSECTION_TITLE_TAX,
+    SUBSECTION_TITLES_TAX,
   );
   const totalSubSection = findSubsection(
     transactionSection,
-    SUBSECTION_TITLE_TOTAL,
+    SUBSECTION_TITLES_TOTAL,
   );
 
   const tax = parseToBigNumber(getDetailText(taxSubSection)).toFixed();
@@ -158,7 +175,7 @@ const handleDividend = (
 
 const handleStockGift = (
   transaction: EnrichedTransaction,
-  sectionTitle: string,
+  sectionTitles: string | string[],
 ): OrderTransaction => {
   if (!transaction.eventType) {
     throw new Error('Transaction eventType is required');
@@ -168,22 +185,22 @@ const handleStockGift = (
   const isin = extractIsinFromHeader(transaction.sections);
   const transactionSection = findTableSection(
     transaction.sections,
-    sectionTitle,
+    sectionTitles,
   );
 
   if (!transactionSection) {
     throw new Error(
-      `Missing ${sectionTitle} section in stock gift: ${transaction.id}`,
+      `Missing ${Array.isArray(sectionTitles) ? sectionTitles.join('/') : sectionTitles} section in stock gift: ${transaction.id}`,
     );
   }
 
   const sharesSubSection = findSubsection(
     transactionSection,
-    SUBSECTION_TITLE_SHARES,
+    SUBSECTION_TITLES_SHARES,
   );
   const sharePriceSubSection = findSubsection(
     transactionSection,
-    SUBSECTION_TITLE_SHARE_PRICE,
+    SUBSECTION_TITLES_SHARE_PRICE,
   );
 
   const quantity = parseToBigNumber(getDetailText(sharesSubSection)).toFixed();
@@ -234,29 +251,29 @@ const handleTradeTransaction = (
   // Try to find Transaction section first (newer format)
   const transactionSection = findTableSection(
     transaction.sections,
-    SECTION_TITLE_TRANSACTION,
+    SECTION_TITLES_TRANSACTION,
   );
 
   if (transactionSection) {
     const sharesSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_SHARES,
+      SUBSECTION_TITLES_SHARES,
     );
     const sharePriceSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_SHARE_PRICE,
+      SUBSECTION_TITLES_SHARE_PRICE,
     );
     const taxSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_TAX,
+      SUBSECTION_TITLES_TAX,
     );
     const taxCorrectionSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_TAX_CORRECTION,
+      SUBSECTION_TITLES_TAX_CORRECTION,
     );
     const feeSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_FEE,
+      SUBSECTION_TITLES_FEE,
     );
 
     quantity = parseToBigNumber(getDetailText(sharesSubSection)).toFixed();
@@ -270,7 +287,7 @@ const handleTradeTransaction = (
     // Fallback to Overview section (older format)
     const overviewSection = findTableSection(
       transaction.sections,
-      SECTION_TITLE_OVERVIEW,
+      SECTION_TITLES_OVERVIEW,
     );
 
     if (!overviewSection) {
@@ -281,14 +298,20 @@ const handleTradeTransaction = (
 
     const transactionSubSection = findSubsection(
       overviewSection,
-      SECTION_TITLE_TRANSACTION,
+      SECTION_TITLES_TRANSACTION,
     );
     const taxCorrectionSubSection = findSubsection(
       overviewSection,
-      SUBSECTION_TITLE_TAX_CORRECTION,
+      SUBSECTION_TITLES_TAX_CORRECTION,
     );
-    const taxSubSection = findSubsection(overviewSection, SUBSECTION_TITLE_TAX);
-    const feeSubSection = findSubsection(overviewSection, SUBSECTION_TITLE_FEE);
+    const taxSubSection = findSubsection(
+      overviewSection,
+      SUBSECTION_TITLES_TAX,
+    );
+    const feeSubSection = findSubsection(
+      overviewSection,
+      SUBSECTION_TITLES_FEE,
+    );
 
     price = parseToBigNumber(getDetailText(transactionSubSection)).toFixed();
     // In older format, quantity is in prefix
@@ -342,13 +365,13 @@ const handleInterest = (transaction: EnrichedTransaction): CashTransaction => {
 
   const transactionSection = findTableSection(
     transaction.sections,
-    SECTION_TITLE_TRANSACTION,
+    SECTION_TITLES_TRANSACTION,
   );
 
   if (transactionSection) {
     const taxSubSection = findSubsection(
       transactionSection,
-      SUBSECTION_TITLE_TAX,
+      SUBSECTION_TITLES_TAX,
     );
     const taxValue = getDetailText(taxSubSection);
     tax = parseToBigNumber(taxValue).toFixed();
@@ -432,12 +455,12 @@ const resolveIsinChanges = (
       continue;
     const overviewSection = findTableSection(
       t.sections,
-      SECTION_TITLE_OVERVIEW,
+      SECTION_TITLES_OVERVIEW,
     );
     if (!overviewSection) continue;
     if (
-      !findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED) ||
-      !findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED)
+      !findSubsection(overviewSection, SUBSECTION_TITLES_SHARES_ADDED) ||
+      !findSubsection(overviewSection, SUBSECTION_TITLES_SHARES_REMOVED)
     )
       continue;
 
@@ -492,13 +515,13 @@ const handleCorporateAction = (
   // Overview section format: used by split events (stock splits, reverse splits)
   const overviewSection = findTableSection(
     transaction.sections,
-    SECTION_TITLE_OVERVIEW,
+    SECTION_TITLES_OVERVIEW,
   );
   const overviewSharesAdded = overviewSection
-    ? findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_ADDED)
+    ? findSubsection(overviewSection, SUBSECTION_TITLES_SHARES_ADDED)
     : undefined;
   const overviewSharesRemoved = overviewSection
-    ? findSubsection(overviewSection, SUBSECTION_TITLE_SHARES_REMOVED)
+    ? findSubsection(overviewSection, SUBSECTION_TITLES_SHARES_REMOVED)
     : undefined;
 
   if (overviewSection && overviewSharesAdded && overviewSharesRemoved) {
@@ -534,12 +557,11 @@ const handleCorporateAction = (
 
   const transactionSection = findTableSection(
     transaction.sections,
-    SECTION_TITLE_TRANSACTION,
+    SECTION_TITLES_TRANSACTION,
   );
 
   if (!transactionSection) {
-    const headerTitle = headerSection?.title ?? '';
-    if (headerTitle === CA_HEADER_DIVIDEND_NOTIFICATION) {
+    if (transaction.subtitle === 'Cash dividend') {
       return {
         title: transaction.title,
         eventType: TRANSACTION_EVENT_TYPE.DIVIDEND_NOTIFICATION,
@@ -547,7 +569,7 @@ const handleCorporateAction = (
         isin,
       };
     }
-    if (headerTitle === CA_HEADER_DIVIDEND_ELECTION) {
+    if (transaction.subtitle === 'Dividend. Cash or stock?') {
       return {
         title: transaction.title,
         eventType: TRANSACTION_EVENT_TYPE.DIVIDEND_ELECTION,
@@ -555,7 +577,10 @@ const handleCorporateAction = (
         isin,
       };
     }
-    if (headerTitle === CA_HEADER_INFORMATIONAL_NOTICE) {
+    if (
+      transaction.subtitle === 'Change' ||
+      transaction.subtitle === 'Bankruptcy'
+    ) {
       return {
         title: transaction.title,
         eventType: TRANSACTION_EVENT_TYPE.INFORMATIONAL_NOTICE,
@@ -564,18 +589,18 @@ const handleCorporateAction = (
       };
     }
     throw new Error(
-      `Unsupported corporate action format (header: "${headerTitle}"): ${transaction.id}`,
+      `Unsupported corporate action format (subtitle: "${transaction.subtitle ?? ''}", header: "${headerSection?.title ?? ''}"): ${transaction.id}`,
     );
   }
 
   const creditedShares = parseToBigNumber(
     getDetailText(
-      findSubsection(transactionSection, SUBSECTION_TITLE_CREDITED_SHARES),
+      findSubsection(transactionSection, SUBSECTION_TITLES_CREDITED_SHARES),
     ),
   ).toFixed();
   const debitedShares = parseToBigNumber(
     getDetailText(
-      findSubsection(transactionSection, SUBSECTION_TITLE_DEBITED_SHARES),
+      findSubsection(transactionSection, SUBSECTION_TITLES_DEBITED_SHARES),
     ),
   ).toFixed();
 
@@ -702,14 +727,14 @@ export const mapTransactionsToPortfolioData = (
 
         case TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT:
           portfolioData.push(
-            handleStockGift(transaction, SECTION_TITLE_TRANSACTION),
+            handleStockGift(transaction, SECTION_TITLES_TRANSACTION),
           );
           break;
 
         case TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT:
         case TRANSACTION_EVENT_TYPE.RECEIVED_GIFT:
           portfolioData.push(
-            handleStockGift(transaction, SECTION_TITLE_OVERVIEW),
+            handleStockGift(transaction, SECTION_TITLES_OVERVIEW),
           );
           break;
 
