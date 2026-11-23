@@ -365,7 +365,7 @@ const handleInterest = (transaction: EnrichedTransaction): CashTransaction => {
   };
 };
 
-const handleTaxCorrection = (
+const handleSimpleCashTransaction = (
   transaction: EnrichedTransaction,
 ): CashTransaction => {
   if (!transaction.eventType) {
@@ -382,11 +382,13 @@ const handleTaxCorrection = (
 
   return {
     title: transaction.title,
-    eventType: transaction.eventType as TRANSACTION_EVENT_TYPE.TAX_CORRECTION,
+    eventType: transaction.eventType as
+      | TRANSACTION_EVENT_TYPE.TAX_CORRECTION
+      | TRANSACTION_EVENT_TYPE.CASH_PERK,
     type,
     date,
     amount,
-    currency: DEFAULT_CURRENCY,
+    currency: transaction.amount?.currency || DEFAULT_CURRENCY,
     tax: '0',
   };
 };
@@ -725,7 +727,8 @@ export const mapTransactionsToPortfolioData = (
           break;
 
         case TRANSACTION_EVENT_TYPE.TAX_CORRECTION:
-          portfolioData.push(handleTaxCorrection(transaction));
+        case TRANSACTION_EVENT_TYPE.CASH_PERK:
+          portfolioData.push(handleSimpleCashTransaction(transaction));
           break;
 
         case TRANSACTION_EVENT_TYPE.CORPORATE_ACTION:

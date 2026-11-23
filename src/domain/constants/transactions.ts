@@ -3,6 +3,7 @@ export enum TRANSACTION_EVENT_TYPE {
   SAVINGS_PLAN = 'Saving Plan', // savings plan
   ROUNDUP = 'Roundup', // roundup
   CASHBACK = 'Cashback', // 15 euros per month bonus
+  CASH_PERK = 'Cash Perk', // cash credit/bonus from Trade Republic
   INTEREST = 'Interest', // interest
   TRADE = 'Trade', // trade (buy/sell)
   DIVIDEND = 'Dividend', // dividend

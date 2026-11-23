@@ -40,6 +40,11 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.CASHBACK;
   }
 
+  // Cash perks (e.g. support or promotional cash credits from Trade Republic)
+  if (transaction.eventType === 'CASH_PERK') {
+    return TRANSACTION_EVENT_TYPE.CASH_PERK;
+  }
+
   // Interest
   if (transaction.title === 'Interest') {
     return TRANSACTION_EVENT_TYPE.INTEREST;

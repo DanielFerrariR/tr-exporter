@@ -5,7 +5,8 @@ export interface CashTransaction {
   title: string;
   eventType:
     | TRANSACTION_EVENT_TYPE.INTEREST
-    | TRANSACTION_EVENT_TYPE.TAX_CORRECTION;
+    | TRANSACTION_EVENT_TYPE.TAX_CORRECTION
+    | TRANSACTION_EVENT_TYPE.CASH_PERK;
   type: TRANSACTION_TYPE.CASH_GAIN | TRANSACTION_TYPE.CASH_EXPENSE;
   date: string;
   amount: string;
