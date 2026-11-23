@@ -108,7 +108,10 @@ export const identifyActivityEventType = (
   }
 
   // Change to the tax exemption order (Freistellungsauftrag)
-  if (trActivityType === 'EXEMPTION_ORDER_CHANGED') {
+  if (
+    trActivityType === 'EXEMPTION_ORDER_CHANGED' ||
+    trActivityType === 'TAX_CUSTOMER_CONFIGURATION_CHANGED'
+  ) {
     return ACTIVITY_EVENT_TYPE.EXEMPTION_ORDER_CHANGED;
   }
 
