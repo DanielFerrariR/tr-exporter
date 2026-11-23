@@ -30,6 +30,14 @@ export const identifyTransactionEventType = (
     return TRANSACTION_EVENT_TYPE.SAVINGS_PLAN;
   }
 
+  // Dividend reinvestments
+  if (
+    transaction.eventType === 'DIVIDEND_REINVESTMENT_TRADE_EXECUTED' ||
+    transaction.subtitle === 'Reinvestment'
+  ) {
+    return TRANSACTION_EVENT_TYPE.DIVIDEND_REINVESTMENT;
+  }
+
   // Round ups
   if (transaction.subtitle === 'Round up') {
     return TRANSACTION_EVENT_TYPE.ROUNDUP;

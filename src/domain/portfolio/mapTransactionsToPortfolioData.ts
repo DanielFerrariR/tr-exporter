@@ -312,7 +312,8 @@ const handleTradeTransaction = (
       | TRANSACTION_EVENT_TYPE.TRADE
       | TRANSACTION_EVENT_TYPE.SAVINGS_PLAN
       | TRANSACTION_EVENT_TYPE.ROUNDUP
-      | TRANSACTION_EVENT_TYPE.CASHBACK,
+      | TRANSACTION_EVENT_TYPE.CASHBACK
+      | TRANSACTION_EVENT_TYPE.DIVIDEND_REINVESTMENT,
     type,
     date,
     isin,
@@ -717,6 +718,7 @@ export const mapTransactionsToPortfolioData = (
         case TRANSACTION_EVENT_TYPE.SAVINGS_PLAN:
         case TRANSACTION_EVENT_TYPE.ROUNDUP:
         case TRANSACTION_EVENT_TYPE.CASHBACK:
+        case TRANSACTION_EVENT_TYPE.DIVIDEND_REINVESTMENT:
           portfolioData.push(...handleTradeTransaction(transaction));
           break;
 

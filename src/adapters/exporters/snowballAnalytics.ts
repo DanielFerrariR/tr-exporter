@@ -368,6 +368,7 @@ class SnowballAnalyticsExporter {
         item.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
         item.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
         item.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
+        item.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND_REINVESTMENT ||
         item.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
         item.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
         item.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT
