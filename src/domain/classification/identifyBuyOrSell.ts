@@ -11,6 +11,7 @@ export const identifyBuyOrSell = (
     transaction.eventType === TRANSACTION_EVENT_TYPE.SAVINGS_PLAN ||
     transaction.eventType === TRANSACTION_EVENT_TYPE.ROUNDUP ||
     transaction.eventType === TRANSACTION_EVENT_TYPE.CASHBACK ||
+    transaction.eventType === TRANSACTION_EVENT_TYPE.DIVIDEND_REINVESTMENT ||
     transaction.eventType === TRANSACTION_EVENT_TYPE.WELCOME_STOCK_GIFT ||
     transaction.eventType === TRANSACTION_EVENT_TYPE.RECEIVED_GIFT ||
     transaction.eventType === TRANSACTION_EVENT_TYPE.GIVE_AWAY_GIFT
