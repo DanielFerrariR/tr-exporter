@@ -377,7 +377,8 @@ class SnowballAnalyticsExporter {
 
       if (
         item.eventType === TRANSACTION_EVENT_TYPE.INTEREST ||
-        item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION
+        item.eventType === TRANSACTION_EVENT_TYPE.TAX_CORRECTION ||
+        item.eventType === TRANSACTION_EVENT_TYPE.CASH_PERK
       ) {
         return [this.handleCashTransaction(item)];
       }
